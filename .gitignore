@@ -1,0 +1,17 @@
+ibase/settings.py
+ibase/templates/navbar.html
+*.txt
+*.xml
+*.idea
+*.pyc
+*__pycache__*
+*.sql
+# OS generated files #
+######################
+.DS_Store
+.DS_Store?
+*._*
+.Spotlight-V100
+.Trashes
+send_history.log
+media/
