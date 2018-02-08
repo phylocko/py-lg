@@ -1,5 +1,3 @@
-ibase/settings.py
-ibase/templates/navbar.html
 *.txt
 *.xml
 *.idea
@@ -13,5 +11,3 @@ ibase/templates/navbar.html
 *._*
 .Spotlight-V100
 .Trashes
-send_history.log
-media/
