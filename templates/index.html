@@ -26,6 +26,25 @@
         .selected_a {
             border-bottom: solid 3px hsl(171, 100%, 41%);
         }
+
+        .rs-status-up {
+        background-color: #BAEEC0;
+        margin: 0px;
+        text-align: center;
+        color: green;
+        }
+        .rs-status-down {
+        background-color: #EEC2BA;
+        margin: 0px;
+        text-align: center;
+        color: red;
+        }
+        .status-wrapper {
+        margin: 0 auto;
+        width: 60px;
+        border-radius: 5px;
+        overflow: hidden;
+        }
     </style>
 </head>
 <body class="has-navbar-fixed-top">
@@ -93,31 +112,29 @@
                             <td class="has-text-weight-bold">
 
 
-
+                            <div class="status-wrapper">
 
                                 {% if pair['rs1'] %}
                                     {% if pair['rs1'].state == "up" %}
-                                        <a href="/rs1/peer/{{ pair.neighbor_address}}"><span class="tag is-success is-small">RS1</span></a>
+                                        <a href="/rs1/peer/{{ pair.neighbor_address}}"><div class="rs-status-up">rs1</div></a>
                                     {% else %}
-                                        <a href="/rs1/peer/{{ pair.neighbor_address}}"><span class="tag is-danger is-small">RS1</span></a>
+                                        <a href="/rs1/peer/{{ pair.neighbor_address}}"><div class="rs-status-down">rs1</div></a>
                                     {% endif %}
                                 {% else %}
-                                    <span class="tag is-light is-small">RS1</span>
+                                    <div class="">rs 1</div>
                                 {% endif %}
-
-                                <br>
 
                                 {% if pair['rs2'] %}
                                     {% if pair['rs2'].state == "up" %}
-                                        <a href="/rs2/peer/{{ pair.neighbor_address}}"><span class="tag is-success is-small">RS2</span></a>
+                                        <a href="/rs2/peer/{{ pair.neighbor_address}}"><div class="rs-status-up">rs2</div></a>
                                     {% else %}
-                                        <a href="/rs2/peer/{{ pair.neighbor_address}}&rs=2"><span class="tag is-danger is-small">RS2</span></a>
+                                        <a href="/rs2/peer/{{ pair.neighbor_address}}&rs=2"><div class="rs-status-down">rs2</div></a>
                                     {% endif %}
                                 {% else %}
-                                    <span class="tag is-light is-small">RS2</span>
+                                    <div class="">rs2</div>
                                 {% endif %}
 
-                                </a>
+                            </div>
 
                             </td>
 
