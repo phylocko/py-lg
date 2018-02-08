@@ -7,7 +7,7 @@ class RouteServer:
         self._fill_dump()
 
     def _fill_dump(self):
-        with open("bird_output.txt") as f:
+        with open("bird6_output.txt") as f:
             self._dump = f.read()
 
     def _parse_dump(self):
@@ -65,6 +65,9 @@ class Peer:
 
     _dump = None
 
+    peer_id = None
+
+    state = None
     bgp_state = None
     description = None
     preference = None
@@ -90,7 +93,11 @@ class Peer:
         """
         Fills all peer information
         """
+        self.peer_id = self._parse_peer_id()
+        self.state = self._parse_state()
         self.bgp_state = self._parse_bgp_state()
+        self.bgp_state_details = self._parse_bgp_state_details()
+        self.last_event_time = self._parse_last_event_time()
         self.description = self._parse_description()
         self.preference = self._parse_preference()
         self.import_limit = self._parse_import_limit()
@@ -107,17 +114,40 @@ class Peer:
         self.hold_timer = self._parse_hold_timer()
         self.keepalive_timer = self._parse_keepalive_timer()
 
-    def _parse_bgp_state(self):
-        """
-          BGP state:          Established
-        """
-        state = None
-        for l in self._dump:
-            if "BGP state" in l:
-                parts = l.split()
-                state = " ".join(parts[2:])
+    def _parse_peer_id(self):
+        l = self._dump[0]
+        parts = l.split()
+        return parts[0][5:]
 
+    def _parse_bgp_state_details(self):
+        """
+        peer_12217 BGP      master   up     2018-02-07 21:40:48  Established
+        """
+        l = self._dump[0]
+        parts = l.split()
+        state_details = " ".join(parts[6:])
+        return state_details
+
+    def _parse_last_event_time(self):
+        """
+        peer_12217 BGP      master   up     2018-02-07 21:40:48  Established
+        """
+        l = self._dump[0]
+        parts = l.split()
+        last_event_time = " ".join(parts[4:6])
+        return last_event_time
+
+    def _parse_state(self):
+        """
+        peer_12217 BGP      master   up     2018-02-07 21:40:48  Established
+        """
+        l = self._dump[0]
+        parts = l.split()
+        state = parts[3]
         return state
+
+    def _parse_bgp_state(self):
+        return self._extract_word("BGP state", 2)
 
     def _parse_description(self):
         return self._extract_word("Description", 1)
@@ -127,8 +157,6 @@ class Peer:
 
     def _parse_import_limit(self):
         return self._extract_word("Import limit", 2)
-
-
 
     def _parse_imported_routes(self):
         return self._extract_word("Routes", 1)
@@ -141,8 +169,6 @@ class Peer:
 
     def _parse_preferred_routes(self):
         return self._extract_word("Routes", 7)
-
-
 
     def _parse_neighbor_address(self):
         return self._extract_word("Neighbor address", 2)

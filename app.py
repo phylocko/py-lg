@@ -5,7 +5,8 @@ peers = r.peers()
 
 for peer in peers:
 
-    print("%s\t\t\t%s" % (peer.description.upper(), peer.bgp_state))
+    print(peer.peer_id)
+    print("%s: %s since %s" % (peer.state, peer.bgp_state_details, peer.last_event_time))
     print(" Description:\t%s" % peer.description)
     print(" Preference:\t%s" % peer.preference)
     print(" Import_limit:\t%s" % peer.import_limit)
