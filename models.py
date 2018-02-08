@@ -1,17 +1,40 @@
 import re
+import paramiko
+from ipaddress import IPv4Address
 
 
 class RouteServer:
+    server = None
+    service = None
+    ip_version = None
     _dump = None
-
     _peers = []
 
-    def __init__(self):
-        self._fill_dump()
+    def __init__(self, server=None, service=None, ip_version=None):
+        self.server = server
+        self.service = service
+        self.ip_version = ip_version or 4
+        self._dump = []
+        self._peers = []
 
     def _fill_dump(self):
-        with open("bird_output.txt") as f:
-            self._dump = f.read()
+
+        if not self.service:
+            return None
+        if not self.server:
+            return None
+
+        bird_command = "show protocols all"
+        server_command = "echo '%s' | sudo birdc -s /var/run/bird%s.%s.ctl" % (bird_command, self.ip_version, self.service)
+
+        client = paramiko.SSHClient()
+        client.load_system_host_keys()
+        client.connect(self.server, username='vlad')
+        stdin, stdout, stderr = client.exec_command(server_command)
+
+        data = stdout.read()
+        self._dump = None
+        self._dump = data.decode("utf-8")
 
     def _parse_dump(self):
         peers = []
@@ -33,6 +56,7 @@ class RouteServer:
         return peers
 
     def _fill_peers(self):
+        self._fill_dump()
         for peer_dump in self._parse_dump():
             peer = Peer(peer_dump)
             self._peers.append(peer)
@@ -72,24 +96,24 @@ class Peer:
     _dump = None
 
     peer_id = None
-
     state = None
     bgp_state = None
+    bgp_state_details = None
+    last_event_time = None
     description = None
     preference = None
     import_limit = None
-
     imported_routes = None
     filtered_routes = None
     exported_routes = None
     preferred_routes = None
-
     neighbor_address = None
     neighbor_as = None
     source_address = None
     route_limit = None
     hold_timer = None
     keepalive_timer = None
+    value = None
 
     def __init__(self, dump):
         self._dump = dump
@@ -119,6 +143,12 @@ class Peer:
         self.route_limit = self._parse_route_limit()
         self.hold_timer = self._parse_hold_timer()
         self.keepalive_timer = self._parse_keepalive_timer()
+
+        try:
+            ip_address = IPv4Address(self.neighbor_address)
+            self.value = int(ip_address)
+        except:
+            self.value = 0
 
     def _parse_peer_id(self):
         l = self._dump[0]
@@ -150,6 +180,10 @@ class Peer:
         l = self._dump[0]
         parts = l.split()
         state = parts[3]
+
+        if state == "start":
+            state = "down"
+
         return state
 
     def _parse_bgp_state(self):
