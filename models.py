@@ -1,3 +1,6 @@
+import re
+
+
 class RouteServer:
     _dump = None
 
@@ -7,7 +10,7 @@ class RouteServer:
         self._fill_dump()
 
     def _fill_dump(self):
-        with open("bird6_output.txt") as f:
+        with open("bird_output.txt") as f:
             self._dump = f.read()
 
     def _parse_dump(self):
@@ -23,6 +26,9 @@ class RouteServer:
             else:
                 if peer:
                     peer.append(l)
+
+        if peer:
+            peers.append(peer)
 
         return peers
 
@@ -196,3 +202,156 @@ class Peer:
                 word = parts[position]
         return word
 
+
+class Prefix:
+    """Prefix example:
+    BIRD 1.4.5 ready.
+    [?1034hbird> show route all 185.174.194.0/24
+    bird>
+    [K185.174.194.0/24   via 85.112.122.101 on br5 [peer_122101 2018-02-08 08:19:20] * (100) [AS60764i]
+        Type: BGP unicast univ
+        BGP.origin: IGP
+        BGP.as_path: 60764
+        BGP.next_hop: 85.112.122.101
+        BGP.local_pref: 130
+        BGP.community: (25478,1000) (25478,4016) (0,28709) (0,47541) (0,47542) (25478,19992) (50384,5013) (50384,5073) (50384,5513) (50384,5523) (50384,5533) (50384,5573) (50384,5583) (50384,5593)
+                       via 85.112.122.13 on br5 [peer_12213 2018-02-08 08:19:35] (100) [AS60764i]
+        Type: BGP unicast univ
+        BGP.origin: IGP
+        BGP.as_path: 20764 60764
+        BGP.next_hop: 85.112.122.13
+        BGP.med: 290
+        BGP.local_pref: 100
+        BGP.community: (25478,3002) (25478,3000) (20764,3002) (20764,3011) (20764,3021)
+                       via 85.112.122.20 on br5 [peer_12220 2018-01-30 12:51:37] (100) [AS60764i]
+        Type: BGP unicast univ
+        BGP.origin: IGP
+        BGP.as_path: 20764 60764
+        BGP.next_hop: 85.112.122.20
+        BGP.med: 295
+        BGP.local_pref: 100
+        BGP.community: (25478,3002) (25478,3000) (20764,3002) (20764,3011) (20764,3021)
+    bird>[K"""
+
+    _dump = None
+    _next_hops = []
+
+    def __init__(self):
+        self._fill_dump()
+        for dump in self._parse_dump():
+            next_hop = NextHop(dump)
+
+    def _fill_dump(self):
+        with open("prefix_output.txt") as f:
+            self._dump = f.read()
+
+    def _fill_next_hops(self):
+        for dump in self._parse_dump():
+            next_hop = NextHop(dump)
+            self._next_hops.append(next_hop)
+
+    def _parse_dump(self):
+        next_hops = []
+        next_hop = list()
+
+        next_prefix_pattern = re.compile("via [0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3} on")
+
+        for l in self._dump.splitlines():
+            if next_prefix_pattern.search(l):
+                if next_hop:
+                    next_hops.append(next_hop)
+                    next_hop = []
+                next_hop.append(l)
+            else:
+                if next_hop:
+                    next_hop.append(l)
+
+        if next_hop:
+            next_hops.append(next_hop)
+
+        return next_hops
+
+    def next_hops(self):
+        self._fill_next_hops()
+        return self._next_hops
+
+
+        # def _extract_word_re(self, string_pattern, value_pattern, data):
+        #     """
+        #     Returns certain value from matching string or None
+        #     :param string_pattern: re pattern to identify if this is the needed string
+        #     :param value_pattern: re pattern that mathes the needed value exactly
+        #     :return: certain value from matching string or None
+        #     """
+        #
+        #     string_pattern = re.compile(string_pattern)
+        #     value_pattern = re.compile(value_pattern)
+        #
+        #     if string_pattern.search(data):
+        #         matching = value_pattern.search(data)
+        #         return matching.group()
+        #
+        #     return None
+
+
+class NextHop:
+    """Example
+                       via 85.112.122.20 on br5 [peer_12220 2018-01-30 12:51:37] (100) [AS60764i]
+    Type: BGP unicast univ
+    BGP.origin: IGP
+    BGP.as_path: 20764 60764
+    BGP.next_hop: 85.112.122.20
+    BGP.med: 295
+    BGP.local_pref: 100
+    BGP.community: (25478,3002) (25478,3000) (20764,3002) (20764,3011) (20764,3021)
+    """
+
+    _dump = None
+
+    origin = None
+    as_path = None
+    next_hop = None
+    med = None
+    local_pref = None
+    community = []
+
+    def __init__(self, dump):
+        self._dump = dump
+        self._parse_dump()
+
+    def _parse_dump(self):
+        self.origin = self._parse_origin()
+        self.as_path = self._parse_as_path()
+        self.next_hop = self._parse_next_hop()
+        self.med = self._parse_med()
+        self.local_pref = self._parse_local_pref()
+        self.community = self._parse_community()
+
+    def _parse_origin(self):
+        return self._extract_word("BGP.origin", 1)
+
+    def _parse_as_path(self):
+        return "n/a"
+
+    def _parse_next_hop(self):
+        return self._extract_word("BGP.next_hop", 1)
+
+    def _parse_med(self):
+        return self._extract_word("BGP.med", 1)
+
+    def _parse_local_pref(self):
+        return self._extract_word("BGP.local_pref", 1)
+
+    def _parse_community(self):
+        return "n/a"
+
+    def _extract_word(self, pattern, position):
+        word = None
+        for l in self._dump:
+            if pattern in l:
+                parts = l.split()
+                word = parts[position]
+        return word
+
+    def __repr__(self):
+        return self.next_hop
