@@ -8,79 +8,74 @@ servers = {
     'rs2': 'novosib-srv0'
 }
 
+
 @app.route("/")
 def index():
     return redirect("/summary/")
 
 
-@app.route("/summary")
+@app.route("/summary/")
 def summary():
     service = request.args.get('service', "wix")
     if not service in ['fv', 'wix']:
         service = "wix"
 
-    server = request.args.get('server', "rs1")
-    if not server in ['rs1', 'rs2']:
-        server = "rs1"
-
     family = request.args.get('family', "rs1")
     if not family in ['4', '6']:
         family = "4"
 
-    server_address = servers[server]
+    rs1 = RouteServer(servers['rs1'], service, family)
+    rs2 = RouteServer(servers['rs2'], service, family)
+    rs1_peers = rs1.peers()
+    rs2_peers = rs2.peers()
 
-    r = RouteServer(server_address, service, family)
-    peers = r.peers()
+    pairs = peers_pairs(rs1_peers, rs2_peers)
 
     return render_template("index.html",
-                           peers=peers,
+                           pairs=pairs,
                            service=service,
-                           server=server,
                            family=family)
 
 
-def sort_peers(peers):
-    peers_dict = {}
+def peers_pairs(rs1_peers, rs2_peers):
+    pairs = []
+
+    checked_values = []
+
+    for peer in rs1_peers:
+        pair = find_pair(peer.value, rs2_peers)
+        twins = {
+            'value': peer.value,
+            'neighbor_address': peer.neighbor_address,
+            'neighbor_as': peer.neighbor_as,
+            'description': peer.description,
+            'rs1': peer,
+            'rs2': pair,
+        }
+        pairs.append(twins)
+        checked_values.append(peer.value)
+
+    for peer in rs2_peers:
+        if not peer.value in checked_values:
+            pair = find_pair(peer.value, rs1_peers)
+            twins = {
+                'value': peer.value,
+                'neighbor_address': peer.neighbor_address,
+                'neighbor_as': peer.neighbor_as,
+                'description': peer.description,
+                'rs1': peer,
+                'rs2': pair,
+            }
+            pairs.append(twins)
+
+    return pairs
+
+
+def find_pair(value, peers):
     for peer in peers:
-        peers_dict[peer.peer_id] = peer
-
-    sorted_peers = sorted(peers_dict)
-
-    return sorted_peers
-
-
-# for peer in peers:
-#
-#     # Summary
-#     print(peer.peer_id)
-#     print("%s: %s since %s" % (peer.state, peer.bgp_state_details, peer.last_event_time))
-#     print(" Description:\t%s" % peer.description)
-#     print(" Preference:\t%s" % peer.preference)
-#     print(" Import_limit:\t%s" % peer.import_limit)
-#     print(" Neighbor_address:\t%s" % peer.neighbor_address)
-#     print(" Neighbor_as:\t%s" % peer.neighbor_as)
-#     print(" Source_address:\t%s" % peer.source_address)
-#     print(" Route_limit:\t%s" % peer.route_limit)
-#     print(" Hold_timer:\t%s" % peer.hold_timer)
-#     print(" Keepalive_timer:\t%s" % peer.keepalive_timer)
-#
-#     print(" Routes:")
-#     print("\tImported:\t%s" % peer.imported_routes)
-#     print("\tFiltered:\t%s" % peer.filtered_routes)
-#     print("\tExported:\t%s" % peer.exported_routes)
-#     print("\tPreferred:\t%s" % peer.preferred_routes)
-#     print("")
-
-# Prefix
-
-# prefix = Prefix()
-# for next_hop in prefix.next_hops():
-#     print(next_hop)
-#     print("\tOrigin:\t\t%s" % next_hop.origin)
-#     print("\tAS Path:\t%s" % next_hop.as_path)
-#     print("\tMED:\t\t%s" % next_hop.med)
-#     print("\tLocal Pref:\t%s" % next_hop.local_pref)
-#     print("\tCommunity:\t%s" % next_hop.community)
+        if peer.value == value:
+            return peer
+    return None
 
 
 if __name__ == "__main__":

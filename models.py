@@ -1,6 +1,6 @@
 import re
 import paramiko
-from ipaddress import IPv4Address
+from ipaddress import IPv4Address, IPv6Address
 
 
 class RouteServer:
@@ -58,7 +58,7 @@ class RouteServer:
     def _fill_peers(self):
         self._fill_dump()
         for peer_dump in self._parse_dump():
-            peer = Peer(peer_dump)
+            peer = Peer(peer_dump, self.ip_version)
             self._peers.append(peer)
 
     def peers(self):
@@ -95,6 +95,7 @@ class Peer:
 
     _dump = None
 
+    ip_version = 0
     peer_id = None
     state = None
     bgp_state = None
@@ -115,7 +116,8 @@ class Peer:
     keepalive_timer = None
     value = None
 
-    def __init__(self, dump):
+    def __init__(self, dump, ip_version):
+        self.ip_version = ip_version
         self._dump = dump
         self._parse_dump()
 
@@ -144,10 +146,21 @@ class Peer:
         self.hold_timer = self._parse_hold_timer()
         self.keepalive_timer = self._parse_keepalive_timer()
 
-        try:
-            ip_address = IPv4Address(self.neighbor_address)
-            self.value = int(ip_address)
-        except:
+        if self.ip_version == 4:
+            try:
+                ip_address = IPv4Address(self.neighbor_address)
+                self.value = int(ip_address)
+            except:
+                self.value = 0
+
+        elif self.ip_version == 6:
+            try:
+                ip_address = IPv6Address(self.neighbor_address)
+                self.value = int(ip_address)
+            except:
+                self.value = 0
+
+        else:
             self.value = 0
 
     def _parse_peer_id(self):

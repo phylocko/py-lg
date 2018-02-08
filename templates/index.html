@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html class="has-navbar-fixed-top">
   <head>
     <meta charset="utf-8">
     <meta hhtp-equiv=refresh content=300>
@@ -20,97 +20,125 @@
             overflow: hidden;
             float: left;
         }
+        .navbar-item {
+            border-bottom: solid 3px #ffffff;
+        }
+        .selected_a {
+            border-bottom: solid 3px hsl(171, 100%, 41%);
+        }
     </style>
 </head>
-<body>
+<body class="has-navbar-fixed-top">
 
+
+
+    <nav class="navbar is-fixed-top">
+
+        <div class="navbar-brand">
+            <a class="navbar-item" href="/"><b>iHome Looking Glass</b></a>
+        </div>
+
+        <div class="navbar-menu">
+
+            <div class="navbar-start">
+                <a class="navbar-item is-active {% if service == "wix" %}selected_a{% endif %}" href="?service=wix&server={{ server }}&family={{ family }}">W-IX</a>
+                <a class="navbar-item is-active {% if service == "fv" %}selected_a{% endif %}" href="?service=fv&server={{ server }}&family={{ family }}">Inet2</a>
+            </div>
+
+            <div class="navbar-end">
+                <a class="navbar-item is-active {% if family == "4" %}selected_a{% endif %}" href="?service={{ service }}&server={{ server }}&family=4">IPv4</a>
+                <a class="navbar-item is-active {% if family == "6" %}selected_a{% endif %}" href="?service={{ service }}&server={{ server }}&family=6">IPv6</a>
+            </div>
+
+        </div>
+
+    </nav>
 
     <section class="section">
         <div class="columns">
-            <div class="column is-2">
-
-                <aside class="menu">
-
-                    <!-- Route Servers -->
-                    <p class="menu-label">
-                    Route Servers
-                    </p>
-                    <ul class="menu-list">
-                        <li>
-                            <a {% if server == "rs1" %}class="is-active"{% endif %} href="?service={{ service }}&server=rs1&family={{ family }}">Route Server 1</a>
-                        </li>
-                        <li>
-                            <a {% if server == "rs2" %}class="is-active"{% endif %} href="?service={{ service }}&server=rs2&family={{ family }}">Route Server 2</a>
-                        </li>
-                    </ul>
-
-
-                    <!-- Route Tables -->
-                    <p class="menu-label">
-                    Route tables
-                    </p>
-                    <ul class="menu-list">
-                        <li>
-                            <a {% if service == "wix" %}class="is-active"{% endif %} href="?service=wix&server={{ server }}&family={{ family }}">W-IX</a>
-                        </li>
-                        <li>
-                            <a {% if service == "fv" %}class="is-active"{% endif %} href="?service=fv&server={{ server }}&family={{ family }}">Inet2</a>
-                        </li>
-                    </ul>
-
-                    <!-- Route Tables -->
-                    <p class="menu-label">
-                    Family
-                    </p>
-                    <ul class="menu-list">
-                        <li>
-                            <a {% if family == "4" %}class="is-active"{% endif %} href="?service={{ service }}&server={{ server }}&family=4">IPv4</a>
-                        </li>
-                        <li>
-                            <a {% if family == "6" %}class="is-active"{% endif %} href="?service={{ service }}&server={{ server }}&family=6">IPv6</a>
-                        </li>
-                    </ul>
-
-                </aside>
-
-            </div>
 
             <div class="column">
 
-                <h1 class="title">iHome LG</h1>
-
-                {% if not peers %}
+                {% if not pairs %}
 
                 <b>The LG is currently not available. Please come back later.</b>
 
                 {% else %}
                     <table class="table is-fullwidth">
                         <thead>
-                            <th>#</th>
                             <th>Netname</th>
                             <th>ASN</th>
                             <th>Address</a></th>
                             <th>State</b></th>
-                            <th>Accepted/Rejected</th>
+                            <th>Rotues</th>
+                            <th>Rejected</th>
                             <th>Persistency</th>
                         </thead>
 
                         <tbody>
-                        {% for peer in peers|sort(attribute='value') %}
+                        {% for pair in pairs|sort(attribute="value") %}
                         <tr>
-                            <td></td>
-                            <td>{{ peer.description }}</td>
-                            <td>{{ peer.neighbor_as }}</td>
-                            <td><a>{{ peer.neighbor_address }}</a></td>
+                            <td>
+                                <b>{{ pair.description }}</b>
+                            </td>
+                            <td>
+                                {{ pair.neighbor_as }}<br>
+                            </td>
+                            <td>
 
-                            {% if peer.state == "up" %}
-                            <td class="has-text-success"><b>{{ peer.state|title }}</b></td>
-                            {% else %}
-                            <td class="has-text-danger"><b>{{ peer.state|title }}</b></td>
-                            {% endif %}
+                                <a>{{ pair.neighbor_address }}</a>
 
-                            <td>{{ peer.imported_routes }}/{{ peer.filtered_routes }}</td>
-                            <td>{{ peer.last_event_time }}</td>
+                            </td>
+
+                            <td class="has-text-weight-bold">
+
+
+
+
+                                {% if pair['rs1'] %}
+                                    {% if pair['rs1'].state == "up" %}
+                                        <a href="/rs1/peer/{{ pair.neighbor_address}}"><span class="tag is-success is-small">RS1</span></a>
+                                    {% else %}
+                                        <a href="/rs1/peer/{{ pair.neighbor_address}}"><span class="tag is-danger is-small">RS1</span></a>
+                                    {% endif %}
+                                {% else %}
+                                    <span class="tag is-light is-small">RS1</span>
+                                {% endif %}
+
+                                <br>
+
+                                {% if pair['rs2'] %}
+                                    {% if pair['rs2'].state == "up" %}
+                                        <a href="/rs2/peer/{{ pair.neighbor_address}}"><span class="tag is-success is-small">RS2</span></a>
+                                    {% else %}
+                                        <a href="/rs2/peer/{{ pair.neighbor_address}}&rs=2"><span class="tag is-danger is-small">RS2</span></a>
+                                    {% endif %}
+                                {% else %}
+                                    <span class="tag is-light is-small">RS2</span>
+                                {% endif %}
+
+                                </a>
+
+                            </td>
+
+                            <td>
+                                {{ pair['rs1'].imported_routes }}
+                                <br>
+                                {{ pair['rs2'].imported_routes }}
+                            </td>
+
+                            <td>
+                                <span class="has-text-grey-light">{{ pair['rs1'].filtered_routes }}</span>
+                                <br>
+                                <span class="has-text-grey-light">{{ pair['rs2'].filtered_routes }}</span>
+                            </td>
+
+                            <td class="has-text-grey-light">
+                                <small>
+                                {{ pair['rs1'].last_event_time }}<br>
+                                {{ pair['rs2'].last_event_time }}
+                                </small>
+                            </td>
                         </tr>
                         {% endfor %}
                         </tbody>
@@ -119,7 +147,10 @@
                 {% endif %}
 
             </div>
+
+
         </div>
     </section>
+
 </body>
 </html>
