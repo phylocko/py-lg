@@ -31,7 +31,7 @@ def summary():
 
     pairs = peers_pairs(rs1_peers, rs2_peers)
 
-    return render_template("index.html",
+    return render_template("summary.html",
                            pairs=pairs,
                            service=service,
                            family=family)

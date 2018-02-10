@@ -1,0 +1,9 @@
+<ul class="nav navbar-nav">
+    <li {% if service == "fv" %} class="active" {% endif %}><a href="?service=fv&server={{ server }}&family={{ family }}"><b>Inet2</b></a></li>
+    <li {% if service == "wix" %} class="active" {% endif %}><a href="?service=wix&server={{ server }}&family={{ family }}"><b>W-IX</b></a></li>
+</ul>
+
+<ul class="nav navbar-nav navbar-right">
+    <li {% if family == "4" %} class="active" {% endif %}><a href="?service={{ service }}&server={{ server }}&family=4">IPv4</a></li>
+    <li {% if family == "6" %} class="active" {% endif %}><a href="?service={{ service }}&server={{ server }}&family=6">IPv6</a></li>
+</ul>

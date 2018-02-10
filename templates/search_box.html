@@ -1,0 +1,21 @@
+<form method="GET" action="/search" class="navbar-form navbar-right">
+    <div class="form-group">
+          <input id="meta_search"
+                 type="text" name="search"
+                 value="{{ search_string }}"
+                 class="form-control"
+                 placeholder="Peer, Prefix or Address">
+    </div>
+    <button type="submit" class="btn btn-primary">Show</button>
+</form>
+
+<script>
+var meta_input = document.getElementById("meta_search");
+var form = document.querySelector('form');
+$( document ).on( 'keydown', function ( e ) {
+    if ( e.keyCode === 27 ) {
+        meta_input.focus();
+        form.reset();
+    }
+});
+</script>

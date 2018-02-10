@@ -1,5 +1,6 @@
 import re
 import paramiko
+from datetime import datetime
 from ipaddress import IPv4Address, IPv6Address
 
 
@@ -248,6 +249,29 @@ class Peer:
                 parts = l.split()
                 word = parts[position]
         return word
+
+    def persistency(self):
+        last_event_time = datetime.strptime(self.last_event_time, "%Y-%m-%d %H:%M:%S")
+        difference = datetime.now() - last_event_time
+
+        if difference.days < 1:
+            total_minutes = difference.seconds / 60
+            if total_minutes < 60:
+                return "{:10.0f} min".format(total_minutes)
+            else:
+                return "{:10.0f} hours".format(total_minutes/60)
+        else:
+            return "%s days" % difference.days
+
+
+        # if total_minutes < 60:
+        #
+        #     return "{:10.0f} min".format(total_minutes)
+        # if total_minutes < 1440:
+        #     return "{:10.0f} hours".format(total_minutes/60)
+        #
+        # return "{:10.0f} days".format(total_minutes/60/24)
+
 
 
 class Prefix:
