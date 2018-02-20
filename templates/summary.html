@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% block content%}
+{% block content %}
 
 {% if not pairs %}
 
@@ -31,7 +31,7 @@
             </td>
             <td>
 
-                <a>{{ pair.neighbor_address }}</a>
+                <a href="/peer/{{ pair.neighbor_address }}">{{ pair.neighbor_address }}</a>
 
             </td>
 

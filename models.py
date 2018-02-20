@@ -18,14 +18,13 @@ class RouteServer:
         self._dump = []
         self._peers = []
 
-    def _fill_dump(self):
+    def _fill_dump(self, bird_command):
 
         if not self.service:
             return None
         if not self.server:
             return None
 
-        bird_command = "show protocols all"
         server_command = "echo '%s' | sudo birdc -s /var/run/bird%s.%s.ctl" % (bird_command, self.ip_version, self.service)
 
         client = paramiko.SSHClient()
@@ -56,15 +55,23 @@ class RouteServer:
 
         return peers
 
-    def _fill_peers(self):
-        self._fill_dump()
+    def _fill_peers(self, bird_command):
+        self._fill_dump(bird_command)
         for peer_dump in self._parse_dump():
-            peer = Peer(peer_dump, self.ip_version)
+            peer = Peer()
+            peer.fill_data(peer_dump, self.ip_version)
             self._peers.append(peer)
 
     def peers(self):
-        self._fill_peers()
+        bird_command = "show protocols all"
+        self._fill_peers(bird_command)
         return self._peers
+
+    def peer(self, peer_address):
+        parts = peer_address.split('.')
+        peer_id = 'peer_%s%s' % (parts[2], parts[3])
+        bird_command = "show protocols all %s" % peer_id
+        self._fill_peers(bird_command)
 
 
 class Peer:
@@ -117,8 +124,8 @@ class Peer:
     keepalive_timer = None
     value = None
 
-    def __init__(self, dump, ip_version):
-        self.ip_version = ip_version
+    def fill_data(self, dump, ip_version):
+        self.ip_version = int(ip_version)
         self._dump = dump
         self._parse_dump()
 
@@ -148,6 +155,7 @@ class Peer:
         self.keepalive_timer = self._parse_keepalive_timer()
 
         if self.ip_version == 4:
+            print("IP VER 4")
             try:
                 ip_address = IPv4Address(self.neighbor_address)
                 self.value = int(ip_address)
@@ -259,19 +267,18 @@ class Peer:
             if total_minutes < 60:
                 return "{:10.0f} min".format(total_minutes)
             else:
-                return "{:10.0f} hours".format(total_minutes/60)
+                return "{:10.0f} hours".format(total_minutes / 60)
         else:
             return "%s days" % difference.days
 
 
-        # if total_minutes < 60:
-        #
-        #     return "{:10.0f} min".format(total_minutes)
-        # if total_minutes < 1440:
-        #     return "{:10.0f} hours".format(total_minutes/60)
-        #
-        # return "{:10.0f} days".format(total_minutes/60/24)
-
+            # if total_minutes < 60:
+            #
+            #     return "{:10.0f} min".format(total_minutes)
+            # if total_minutes < 1440:
+            #     return "{:10.0f} hours".format(total_minutes/60)
+            #
+            # return "{:10.0f} days".format(total_minutes/60/24)
 
 
 class Prefix:

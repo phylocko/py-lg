@@ -1,0 +1,37 @@
+    <table class="table">
+        <tr>
+            <tr><td colspan="2"><h3>Session State</h3></td></tr>
+
+            <tr>
+
+            {% if peer.state == "up" %}
+                    <td colspan="2" class="success"><b>{{ peer.bgp_state }}</b> since {{ peer.last_event_time }}</td>
+            {% elif peer.state == "feed" %}
+                    <td colspan="2" class="warning"><b>{{ peer.bgp_state }}</b> since {{ peer.last_event_time }}</td>
+            {% else %}
+                <td colspan="2" class="danger"><b>{{ peer.bgp_state_details }}</b> since {{ peer.last_event_time }}</td>
+            {% endif %}
+            </tr>
+
+
+            <tr><td colspan="2"><h3>Prefixes</h3></td></tr>
+
+            <tr><td class="warning text-right">Imported</td><td class="active"><b>{{ peer.imported_routes }}</b></td></tr>
+            <tr><td class="success text-right">Preferred</td><td class="active text-success"><b>{{ peer.preferred_routes }}</b></td></tr>
+            <tr><td class="danger text-right">Filtered</td><td class="active text-danger"><b>{{ peer.filtered_routes }}</b></td></tr>
+            <tr><td class="active text-right">Exported</td><td class="active">{{ peer.exported_routes }}</td></tr>
+
+            <tr><td colspan="2"><h3>Session parameters</h3></td></tr>
+            <tr><td>Neighbor address</td><td class="active">{{ peer.neighbor_address }}</td></tr>
+            <tr><td>Source address</td><td class="active">{{ peer.source_address }}</td></tr>
+            <tr><td>Peer AS</td><td class="active">{{ peer.neighbor_as }}</td></tr>
+            <tr><td>Description</td><td class="active">{{ peer.description }}</td></tr>
+            <tr><td>Preference</td><td class="active">{{ peer.preference }}</td></tr>
+            <tr><td>Import limit</td><td class="active">{{ peer.import_limit }}</td></tr>
+            <tr><td>Route limit</td><td class="active">{{ peer.route_limit }}</td></tr>
+            <tr><td>Hold timer</td><td class="active">{{ peer.hold_timer }}</td></tr>
+            <tr><td>Keepalive timer</td><td class="active">{{ peer.keepalive_timer }}</td></tr>
+
+
+        </tr>
+    </table>
