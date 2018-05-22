@@ -5,42 +5,36 @@ from ipaddress import IPv4Address, IPv6Address
 
 
 class RouteServer:
+    _session = None
     server = None
     service = None
     ip_version = None
-    _dump = None
-    _peers = []
 
     def __init__(self, server=None, service=None, ip_version=None):
         self.server = server
         self.service = service
         self.ip_version = ip_version or 4
-        self._dump = []
-        self._peers = []
 
-    def _fill_dump(self, bird_command):
+    def connect(self):
+        session = paramiko.SSHClient()
+        session.load_system_host_keys()
+        session.connect(self.server, username='vlad')
+        self._session = session
 
-        if not self.service:
-            return None
-        if not self.server:
-            return None
+    def _disconnect(self):
+        self._session.close()
 
-        server_command = "echo '%s' | sudo birdc -s /var/run/bird%s.%s.ctl" % (bird_command, self.ip_version, self.service)
+    def _cmd(self, command):
+        stdin, stdout, stderr = self._session.exec_command(command)
 
-        client = paramiko.SSHClient()
-        client.load_system_host_keys()
-        client.connect(self.server, username='vlad')
-        stdin, stdout, stderr = client.exec_command(server_command)
+        bird_dump_bytes = stdout.read()
+        return bird_dump_bytes.decode("utf-8")
 
-        data = stdout.read()
-        self._dump = None
-        self._dump = data.decode("utf-8")
-
-    def _parse_dump(self):
+    def _parse__show_protocols(self, bird_dump):
         peers = []
         peer = list()
 
-        for l in self._dump.splitlines():
+        for l in bird_dump.splitlines():
             if l[0:5] == "peer_":
                 if peer:
                     peers.append(peer)
@@ -55,23 +49,33 @@ class RouteServer:
 
         return peers
 
-    def _fill_peers(self, bird_command):
-        self._fill_dump(bird_command)
-        for peer_dump in self._parse_dump():
-            peer = Peer()
-            peer.fill_data(peer_dump, self.ip_version)
-            self._peers.append(peer)
-
     def peers(self):
         bird_command = "show protocols all"
-        self._fill_peers(bird_command)
-        return self._peers
+        server_command = "echo '%s' | sudo birdc -s /var/run/bird%s.%s.ctl" % (bird_command, self.ip_version, self.service)
+        bird_dump = self._cmd(server_command)
+
+        peers = []
+        for peer_dump in self._parse__show_protocols(bird_dump):
+            peer = Peer()
+            peer.fill_data(peer_dump, self.ip_version)
+            peers.append(peer)
+
+        return peers
 
     def peer(self, peer_address):
         parts = peer_address.split('.')
         peer_id = 'peer_%s%s' % (parts[2], parts[3])
+
         bird_command = "show protocols all %s" % peer_id
-        self._fill_peers(bird_command)
+        server_command = "echo '%s' | sudo birdc -s /var/run/bird%s.%s.ctl" % (bird_command, self.ip_version, self.service)
+        bird_dump = self._cmd(server_command)
+        peers = []
+        for peer_dump in self._parse__show_protocols(bird_dump):
+            peer = Peer()
+            peer.fill_data(peer_dump, self.ip_version)
+            peers.append(peer)
+
+        return peers[0]
 
 
 class Peer:
@@ -155,7 +159,6 @@ class Peer:
         self.keepalive_timer = self._parse_keepalive_timer()
 
         if self.ip_version == 4:
-            print("IP VER 4")
             try:
                 ip_address = IPv4Address(self.neighbor_address)
                 self.value = int(ip_address)
@@ -221,16 +224,36 @@ class Peer:
         return self._extract_word("Import limit", 2)
 
     def _parse_imported_routes(self):
-        return self._extract_word("Routes", 1)
+        filtered_pattern = re.compile("[0-9]{1,10} imported")
+        for l in self._dump:
+            result = filtered_pattern.search(l)
+            if result:
+                parts = result.group().split()
+                return parts[0]
 
     def _parse_filtered_routes(self):
-        return self._extract_word("Routes", 3)
+        filtered_pattern = re.compile("[0-9]{1,10} filtered")
+        for l in self._dump:
+            result = filtered_pattern.search(l)
+            if result:
+                parts = result.group().split()
+                return parts[0]
 
     def _parse_exported_routes(self):
-        return self._extract_word("Routes", 5)
+        filtered_pattern = re.compile("[0-9]{1,10} exported")
+        for l in self._dump:
+            result = filtered_pattern.search(l)
+            if result:
+                parts = result.group().split()
+                return parts[0]
 
     def _parse_preferred_routes(self):
-        return self._extract_word("Routes", 7)
+        filtered_pattern = re.compile("[0-9]{1,10} preferred")
+        for l in self._dump:
+            result = filtered_pattern.search(l)
+            if result:
+                parts = result.group().split()
+                return parts[0]
 
     def _parse_neighbor_address(self):
         return self._extract_word("Neighbor address", 2)
@@ -270,15 +293,6 @@ class Peer:
                 return "{:10.0f} hours".format(total_minutes / 60)
         else:
             return "%s days" % difference.days
-
-
-            # if total_minutes < 60:
-            #
-            #     return "{:10.0f} min".format(total_minutes)
-            # if total_minutes < 1440:
-            #     return "{:10.0f} hours".format(total_minutes/60)
-            #
-            # return "{:10.0f} days".format(total_minutes/60/24)
 
 
 class Prefix:
@@ -352,24 +366,6 @@ class Prefix:
     def next_hops(self):
         self._fill_next_hops()
         return self._next_hops
-
-
-        # def _extract_word_re(self, string_pattern, value_pattern, data):
-        #     """
-        #     Returns certain value from matching string or None
-        #     :param string_pattern: re pattern to identify if this is the needed string
-        #     :param value_pattern: re pattern that mathes the needed value exactly
-        #     :return: certain value from matching string or None
-        #     """
-        #
-        #     string_pattern = re.compile(string_pattern)
-        #     value_pattern = re.compile(value_pattern)
-        #
-        #     if string_pattern.search(data):
-        #         matching = value_pattern.search(data)
-        #         return matching.group()
-        #
-        #     return None
 
 
 class NextHop:

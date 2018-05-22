@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+{% if error %}
+<div class="container text-center">
+<b>{{ error }}</b>
+</div>
+
+{% else %}
+
+    <div class="container">
+        <ol class="breadcrumb">
+            {% if service == "wix" %}
+                <li><a href="/summary/?service=wix">W-IX members</a></li>
+            {% else %}
+                <li><a href="/summary/?service=fv">Inet2 members</a></li>
+            {% endif %}
+            <li><a href="/peer/{{ peer_address }}/">{{ peer_address }}</a></li>
+            <li class="active">Routes</li>
+        </ol>
+
+        <div class="row">
+
+            <div class="col-md-6">
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <h3 class="panel-title">Routes on RS1</h3>
+                    </div>
+                    {% for route in rs1_peer.routes %}
+                    Route
+                    {% endfor %}
+                </div>
+            </div>
+
+
+            <div class="col-md-6">
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <h3 class="panel-title">Routes on RS2</h3>
+                    </div>
+                    {% for route in rs2_peer.routes %}
+                    Route
+                    {% endfor %}
+
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+{% endif %}
+
+{% endblock %}

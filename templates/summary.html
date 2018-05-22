@@ -35,29 +35,28 @@
 
             </td>
 
-            <td>
+            <td class="active">
 
                 {% if pair['rs1'] %}
                     {% if pair['rs1'].state == "up" %}
-                        <a href="/rs1/peer/{{ pair.neighbor_address}}"><span class="glyphicon glyphicon-ok text-success" aria-hidden="true"></span></a>
+                        <span class="text-success"><b>Up</b></span>
                     {% else %}
-                        <span class="glyphicon glyphicon-warning-sign text-warning" aria-hidden="true"></span>
+                        <span class="text-danger">Down</span>
                     {% endif %}
                 {% else %}
-                        <span class="glyphicon glyphicon-warning-sign text-muted" aria-hidden="true"></span>
+                        —
                 {% endif %}
 
                 <br>
 
                 {% if pair['rs2'] %}
                     {% if pair['rs2'].state == "up" %}
-
-                        <a href="/rs1/peer/{{ pair.neighbor_address}}"><span class="glyphicon glyphicon-ok text-success" aria-hidden="true"></span></a>
+                        <span class="text-success"><b>Up</b></span>
                     {% else %}
-                        <span class="glyphicon glyphicon-warning-sign text-warning" aria-hidden="true"></span>
+                        <span class="text-danger">Down</span>
                     {% endif %}
                 {% else %}
-                        <span class="glyphicon glyphicon-warning-sign text-muted" aria-hidden="true"></span>
+                        —
                 {% endif %}
 
 

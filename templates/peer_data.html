@@ -16,15 +16,31 @@
 
             <tr><td colspan="2"><h3>Prefixes</h3></td></tr>
 
-            <tr><td class="warning text-right">Imported</td><td class="active"><b>{{ peer.imported_routes }}</b></td></tr>
-            <tr><td class="success text-right">Preferred</td><td class="active text-success"><b>{{ peer.preferred_routes }}</b></td></tr>
-            <tr><td class="danger text-right">Filtered</td><td class="active text-danger"><b>{{ peer.filtered_routes }}</b></td></tr>
-            <tr><td class="active text-right">Exported</td><td class="active">{{ peer.exported_routes }}</td></tr>
+            <tr>
+                <td class="warning text-right">Imported</td>
+                <td class="active"><b>{{ peer.imported_routes }}</b> <a class="pull-right" href="routes/?type=imported">View imported routes</a></td>
+            </tr>
+            <tr>
+                <td class="success text-right">Preferred</td>
+                <td class="active text-success"><b>{{ peer.preferred_routes }}</b> <a class="pull-right" href="routes/?type=preferred">View preferred routes</a></td>
+            </tr>
+            <tr>
+                <td class="danger text-right">Filtered</td>
+                <td class="active text-danger"><b>{{ peer.filtered_routes }}</b> <a class="pull-right" href="routes/?type=filtered">View filtered routes</a></td>
+            </tr>
+            <tr>
+                <td class="active text-right">Exported</td>
+                <td class="active">{{ peer.exported_routes }}</td>
+            </tr>
 
             <tr><td colspan="2"><h3>Session parameters</h3></td></tr>
             <tr><td>Neighbor address</td><td class="active">{{ peer.neighbor_address }}</td></tr>
-            <tr><td>Source address</td><td class="active">{{ peer.source_address }}</td></tr>
-            <tr><td>Peer AS</td><td class="active">{{ peer.neighbor_as }}</td></tr>
+            <tr>
+                <td>Peer AS</td>
+                <td class="active">
+                    <a href="http://apps.db.ripe.net/search/query.html?sources=RIPE_NCC&searchtext=AS{{ peer.neighbor_as }}&submit=Search">{{ peer.neighbor_as }}</a>
+                </td>
+            </tr>
             <tr><td>Description</td><td class="active">{{ peer.description }}</td></tr>
             <tr><td>Preference</td><td class="active">{{ peer.preference }}</td></tr>
             <tr><td>Import limit</td><td class="active">{{ peer.import_limit }}</td></tr>
