@@ -5,15 +5,16 @@ from ipaddress import IPv4Address, IPv6Address
 
 
 class RouteServer:
-    _session = None
-    server = None
-    service = None
-    ip_version = None
-
     def __init__(self, server=None, service=None, ip_version=None):
+        self._session = None
+        self.server = None
+        self.service = None
+        self.ip_version = None
+
         self.server = server
         self.service = service
         self.ip_version = ip_version or 4
+        self.connect()
 
     def connect(self):
         session = paramiko.SSHClient()
@@ -49,6 +50,25 @@ class RouteServer:
 
         return peers
 
+    def _parse__show_route_peer(self, bird_dump):
+        routes = []
+        route = []
+
+        for l in bird_dump.splitlines():
+            if 'via' in l:
+                if route:
+                    routes.append(route)
+                    route = []
+                route.append(l)
+            else:
+                if route:
+                    route.append(l)
+
+        if route:
+            routes.append(route)
+
+        return routes
+
     def peers(self):
         bird_command = "show protocols all"
         server_command = "echo '%s' | sudo birdc -s /var/run/bird%s.%s.ctl" % (bird_command, self.ip_version, self.service)
@@ -62,10 +82,7 @@ class RouteServer:
 
         return peers
 
-    def peer(self, peer_address):
-        parts = peer_address.split('.')
-        peer_id = 'peer_%s%s' % (parts[2], parts[3])
-
+    def peer(self, peer_id):
         bird_command = "show protocols all %s" % peer_id
         server_command = "echo '%s' | sudo birdc -s /var/run/bird%s.%s.ctl" % (bird_command, self.ip_version, self.service)
         bird_dump = self._cmd(server_command)
@@ -76,6 +93,89 @@ class RouteServer:
             peers.append(peer)
 
         return peers[0]
+
+    def routes(self, peer_id, routes_type):
+        bird_command = "show route protocol %s all" % peer_id
+        if routes_type == 'filtered':
+            bird_command = "show route protocol %s filtered all" % peer_id
+
+        server_command = "echo '%s' | sudo birdc -s /var/run/bird%s.%s.ctl | head -3000" % (bird_command, self.ip_version, self.service)
+        bird_dump = self._cmd(server_command)
+
+        routes = []
+        for route_dump in self._parse__show_route_peer(bird_dump):
+            if len(routes) < 301:
+                route = Route(route_dump, self.ip_version)
+                if routes_type == 'filtered':
+                    route.filtered = True
+                routes.append(route)
+        return routes
+
+
+class Route:
+    def __init__(self, dump, ip_version):
+        self.prefix = None
+        self.next_hop = None
+        self.via = None
+        self.local_pref = None
+        self.as_path = []
+        self.communities = []
+        self.preferred = False
+        self.origin = None
+        self.time = None
+        self.ip_version = int(ip_version)
+        self._dump = dump
+        self._parse_dump()
+        self.filtered = False
+
+    def _parse_dump(self):
+        """
+        Fills all route information
+        """
+        self.prefix = self._extract_word('via', 0)
+        self.origin = self._extract_word('BGP.origin', 1)
+        self.next_hop = self._extract_word('BGP.next_hop', 1)
+        self.local_pref = self._extract_word('BGP.local_pref', 1)
+        for c in self._parse_communities():
+            self.communities.append(c)
+        self.as_path = self._parse_as_path()
+        self.preferred = self._parse_preferred()
+
+    def _parse_preferred(self):
+        for l in self._dump:
+            if 'via' in l and '*' in l:
+                return True
+        return False
+
+    def _parse_communities(self):
+        communities = []
+        pattern = re.compile('(\(\d{1,8}\,\d{1,8}\))')
+        for l in self._dump:
+            if 'BGP.community' in l:
+                groups = pattern.findall(l)
+                for g in groups:
+                    community = g.replace('(', '')
+                    community = community.replace(')', '')
+                    # community = community.replace(',', ':')
+                    communities.append(community)
+        return communities
+
+    def _parse_as_path(self):
+        as_path = []
+        for l in self._dump:
+            if 'BGP.as_path' in l:
+                pattern = re.compile('(\d{2,10})')
+                groups = pattern.findall(l)
+                as_path.extend([x for x in groups])
+        return as_path
+
+    def _extract_word(self, pattern, position):
+        word = None
+        for l in self._dump:
+            if pattern in l:
+                parts = l.split()
+                word = parts[position]
+        return word
 
 
 class Peer:
@@ -146,10 +246,10 @@ class Peer:
         self.preference = self._parse_preference()
         self.import_limit = self._parse_import_limit()
 
-        self.imported_routes = self._parse_imported_routes()
-        self.filtered_routes = self._parse_filtered_routes()
-        self.exported_routes = self._parse_exported_routes()
-        self.preferred_routes = self._parse_preferred_routes()
+        self.imported_routes = int(self._parse_imported_routes())
+        self.filtered_routes = int(self._parse_filtered_routes())
+        self.exported_routes = int(self._parse_exported_routes())
+        self.preferred_routes = int(self._parse_preferred_routes())
 
         self.neighbor_address = self._parse_neighbor_address()
         self.neighbor_as = self._parse_neighbor_as()
@@ -178,7 +278,7 @@ class Peer:
     def _parse_peer_id(self):
         l = self._dump[0]
         parts = l.split()
-        return parts[0][5:]
+        return parts[0]
 
     def _parse_bgp_state_details(self):
         """

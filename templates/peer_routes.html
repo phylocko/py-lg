@@ -2,53 +2,140 @@
 
 {% block content %}
 
+
+<style>
+    .community {
+        background-color: #666666;
+        padding-left: 6px;
+        padding-right: 6px;
+        border-radius: 3px;
+        font-size: 12px;
+        color: #ebebeb;
+    }
+    .asterisk {
+        width: 50px;
+    }
+    .prefix {
+        width: 120px;
+    }
+    .preferred-heading {
+        background-color: #F0FFF1;
+    }
+    .non-preferred-heading {
+        background-color: #FFFDE3;
+    }
+    .filtered {
+        background-color: #F0EFEE;
+        color: #999999;
+    }
+</style>
+
 {% if error %}
 <div class="container text-center">
-<b>{{ error }}</b>
+    <b>{{ error }}</b>
 </div>
 
 {% else %}
 
-    <div class="container">
-        <ol class="breadcrumb">
-            {% if service == "wix" %}
-                <li><a href="/summary/?service=wix">W-IX members</a></li>
-            {% else %}
-                <li><a href="/summary/?service=fv">Inet2 members</a></li>
-            {% endif %}
-            <li><a href="/peer/{{ peer_address }}/">{{ peer_address }}</a></li>
-            <li class="active">Routes</li>
-        </ol>
+<div class="container-fluid">
+    <ol class="breadcrumb">
+        <li><a href="/{{ service }}/summary/">{{ service }} members</a></li>
+        <li><a href="/{{ service }}/peer/{{ peer_id }}/">{{ peer_id }}</a></li>
+        <li class="active">{% if filtered %}Rejected{% else %}Accepted{% endif %} routes</li>
+    </ol>
 
-        <div class="row">
+    {% if filtered %}
 
-            <div class="col-md-6">
-                <div class="panel panel-default">
-                    <div class="panel-heading">
-                        <h3 class="panel-title">Routes on RS1</h3>
-                    </div>
-                    {% for route in rs1_peer.routes %}
-                    Route
-                    {% endfor %}
-                </div>
-            </div>
+    <div class="text-right"><a class="btn btn-sm btn-success" href="/{{ service }}/peer/{{ peer_id }}/routes/?family={{ family }}">Show accepted routes</a></div>
 
+    {% else %}
 
-            <div class="col-md-6">
-                <div class="panel panel-default">
-                    <div class="panel-heading">
-                        <h3 class="panel-title">Routes on RS2</h3>
-                    </div>
-                    {% for route in rs2_peer.routes %}
-                    Route
-                    {% endfor %}
+    <div class="btn-group" data-toggle="buttons">
+        <label class="btn btn-primary active" id="all_button">
+            <input type="radio" autocomplete="off" id="all_input" checked> All accepted
+        </label>
+        <label class="btn btn-primary" id="preferred_button">
+            <input type="radio" autocomplete="off" id="preferred_input"> Preferred
+        </label>
+        <label class="btn btn-primary" id="non_preferred_button">
+            <input type="radio" autocomplete="off" id="non_preferred_input"> Not preferred
+        </label>
+    </div>
 
-                </div>
-            </div>
+    <a class="pull-right btn btn-sm btn-warning" href="/{{ service }}/peer/{{ peer_id }}/routes/rejected/?family={{ family }}">Show rejected routes</a>
 
+    <script>
+        $('#preferred_button').click(function() {
+            $('tr.preferred').show()
+            $('tr.non-preferred').hide()
+        })
+        $('#non_preferred_button').click(function() {
+            $('tr.preferred').hide()
+            $('tr.non-preferred').show()
+        })
+        $('#all_button').click(function() {
+            $('tr.preferred').show()
+            $('tr.non-preferred').show()
+        })
+    </script>
+
+    {% endif %}
+
+    <div class="row">
+
+        <div class="col-md-6">
+            <h3>Session @ RS1</h3>
+                {% with peer = rs1_peer %}
+                    {% include 'brief_peer_data.html' %}
+                    <h3>&nbsp;{% if filtered %}Rejected{% else %}Accepted{% endif %} routes</h3>
+                    {% if peer.state == 'up' %}
+                        {% if not filtered %}
+                            {% if peer.imported_routes > 300 %}
+                            <div class="alert alert-warning" role="alert">Displaying first 300 of {{ peer.imported_routes }} accepted routes</div>
+                            {% endif %}
+                        {% endif %}
+                        {% if filtered %}
+                            {% if peer.filtered_routes > 300 %}
+                            <div class="alert alert-warning" role="alert">Displaying first 300 of {{ peer.filtered_routes }} rejected routes</div>
+                            {% endif %}
+                        {% endif %}
+                        {% with routes = rs1_routes %}
+                        {% include 'peer_route_table.html' %}
+                        {% endwith %}
+                    {% else %}
+                        <div class="alert alert-warning" role="alert">Session is not established</div>
+                    {% endif %}
+                {% endwith %}
+        </div>
+
+        <div class="col-md-6">
+            <h3>Session @ RS2</h3>
+                {% with peer = rs2_peer %}
+                    {% include 'brief_peer_data.html' %}
+                    <h3>&nbsp;{% if filtered %}Rejected{% else %}Accepted{% endif %} routes</h3>
+                    {% if peer.state == 'up' %}
+                        {% if not filtered %}
+                            {% if peer.imported_routes > 300 %}
+                            <div class="alert alert-warning" role="alert">Displaying first 300 of {{ peer.imported_routes }} accepted routes</div>
+                            {% endif %}
+                        {% endif %}
+                        {% if filtered %}
+                            {% if peer.filtered_routes > 300 %}
+                            <div class="alert alert-warning" role="alert">Displaying first 300 of {{ peer.filtered_routes }} rejected routes</div>
+                            {% endif %}
+                        {% endif %}
+                        {% with routes = rs2_routes %}
+                        {% include 'peer_route_table.html' %}
+                        {% endwith %}
+                    {% else %}
+                        <div class="alert alert-warning" role="alert">Session is not established</div>
+                    {% endif %}
+                {% endwith %}
         </div>
 
     </div>
+
+</div>
 
 {% endif %}
 

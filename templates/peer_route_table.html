@@ -1,0 +1,55 @@
+<table class="table">
+
+    {% for route in routes %}
+        {% if route.filtered %}
+        <tr class="filtered">
+        {% else %}
+        <tr class="{% if route.preferred %}preferred preferred-heading{% else %}non-preferred non-preferred-heading{% endif %}">
+        {% endif%}
+            <td class="asterisk">
+                {% if route.preferred %}
+                <span class="glyphicon glyphicon-menu-right" aria-hidden="true"></span>
+                {% else %}
+                &nbsp;
+                {% endif %}
+            </td>
+            <td class="prefix"><b>{{ route.prefix }}</b></td>
+            <td>next hop <b>{{ route.next_hop }}</b></td>
+            <td>localpref <label class="label label-danger">{{ route.local_pref }}</label></td>
+
+        </tr>
+
+        {% if route.filtered %}
+        <tr class="filtered">
+        {% else %}
+        <tr class="{% if route.preferred %}preferred{% else %}non-preferred{% endif %}">
+        {% endif %}
+            <td></td>
+            <td class="text-right">AS-Path</td>
+            <td colspan="2">
+                {% for asn in route.as_path %}
+                <b>{{ asn }}</b>
+                {% endfor %}
+            </td>
+        </tr>
+
+
+        {% if route.filtered %}
+        <tr class="filtered">
+        {% else %}
+        <tr class="{% if route.preferred %}preferred{% else %}non-preferred{% endif %}">
+        {% endif %}
+            <td></td>
+            <td class="text-right">Community</td>
+
+            <td colspan="2">
+                <small>
+                {% for c in route.communities %}
+                <label class="label label-info">{{c}}</label>
+                {% endfor %}
+                </small>
+            </td>
+        </tr>
+
+    {% endfor %}
+</table>

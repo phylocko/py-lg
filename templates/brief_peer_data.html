@@ -1,0 +1,21 @@
+<table class="table">
+    <tr>
+
+    {% if peer.state == "up" %}
+            <td colspan="2" class="success"><b>{{ peer.bgp_state }}</b> since {{ peer.last_event_time }}</td>
+    {% elif peer.state == "feed" %}
+            <td colspan="2" class="warning"><b>{{ peer.bgp_state }}</b> since {{ peer.last_event_time }}</td>
+    {% else %}
+        <td colspan="2" class="danger"><b>{{ peer.bgp_state_details }}</b> since {{ peer.last_event_time }}</td>
+    {% endif %}
+    </tr>
+
+    <tr><td>Neighbor address</td><td class="active">{{ peer.neighbor_address }}</td></tr>
+    <tr>
+        <td>Peer AS</td>
+        <td class="active">
+            <a href="http://apps.db.ripe.net/search/query.html?sources=RIPE_NCC&searchtext=AS{{ peer.neighbor_as }}&submit=Search">{{ peer.neighbor_as }}</a>
+        </td>
+    </tr>
+    <tr><td>Description</td><td class="active">{{ peer.description }}</td></tr>
+</table>

@@ -11,13 +11,13 @@
 <div class="container">
     <table class="table table-stripped">
         <thead>
-            <th>Netname</th>
-            <th>ASN</th>
-            <th>Address</a></th>
-            <th>State</b></th>
-            <th class="text-right">Accepted</th>
-            <th class="text-right">Rejected</th>
-            <th>Persistency</th>
+        <th>Netname</th>
+        <th>ASN</th>
+        <th>Address</a></th>
+        <th>State</b></th>
+        <th class="text-right">Accepted</th>
+        <th class="text-right">Rejected</th>
+        <th>Persistency</th>
         </thead>
 
         <tbody>
@@ -27,55 +27,56 @@
                 <b>{{ pair.description }}</b>
             </td>
             <td>
-                <b><a href="http://apps.db.ripe.net/search/query.html?sources=RIPE_NCC&searchtext=AS{{ pair.neighbor_as }}&submit=Search">{{ pair.neighbor_as }}</a></b>
+                <b><a href="http://apps.db.ripe.net/search/query.html?sources=RIPE_NCC&searchtext=AS{{ pair.neighbor_as }}&submit=Search">{{
+                    pair.neighbor_as }}</a></b>
             </td>
             <td>
 
-                <a href="/peer/{{ pair.neighbor_address }}">{{ pair.neighbor_address }}</a>
+                <a href="/{{ service }}/peer/{{ pair.peer_id }}/?family={{ family }}">{{ pair.neighbor_address }}</a>
 
             </td>
 
             <td class="active">
 
                 {% if pair['rs1'] %}
-                    {% if pair['rs1'].state == "up" %}
-                        <span class="text-success"><b>Up</b></span>
-                    {% else %}
-                        <span class="text-danger">Down</span>
-                    {% endif %}
+                {% if pair['rs1'].state == "up" %}
+                <span class="text-success"><b>Up</b></span>
                 {% else %}
-                        —
+                <span class="text-danger">Down</span>
+                {% endif %}
+                {% else %}
+                —
                 {% endif %}
 
                 <br>
 
                 {% if pair['rs2'] %}
-                    {% if pair['rs2'].state == "up" %}
-                        <span class="text-success"><b>Up</b></span>
-                    {% else %}
-                        <span class="text-danger">Down</span>
-                    {% endif %}
+                {% if pair['rs2'].state == "up" %}
+                <span class="text-success"><b>Up</b></span>
                 {% else %}
-                        —
+                <span class="text-danger">Down</span>
+                {% endif %}
+                {% else %}
+                —
                 {% endif %}
 
 
             </td>
 
             <td class="text-right">
-                {{ pair['rs1'].imported_routes }}<br>
-                {{ pair['rs2'].imported_routes }}
+                <a href="/{{ service }}/peer/{{ pair['rs1'].peer_id }}/routes/?family={{ family }}">{{ pair['rs1'].imported_routes }}</a><br>
+                <a href="/{{ service }}/peer/{{ pair['rs2'].peer_id }}/routes/?family={{ family }}">{{ pair['rs2'].imported_routes }}</a>
             </td>
 
             <td class="text-muted text-right">
-                <span>{{ pair['rs1'].filtered_routes }}</span><br>
-                <span>{{ pair['rs2'].filtered_routes }}</span>
+                <a href="/{{ service }}/peer/{{ pair['rs1'].peer_id }}/routes/rejected/?family={{ family }}">{{ pair['rs1'].filtered_routes }}</a><br>
+                <a href="/{{ service }}/peer/{{ pair['rs2'].peer_id }}/routes/rejected/?family={{ family }}">{{ pair['rs2'].filtered_routes }}</a>
             </td>
 
             <td class="text-muted">
                 <small>
-                <abbr title="{{ pair['rs1'].last_event_time }}">{{ pair['rs1'].persistency() }} {{ pair['rs1'].state }}</abbr><br>
-                <abbr title="{{ pair['rs2'].last_event_time }}">{{ pair['rs2'].persistency() }} {{ pair['rs2'].state }}</abbr>
+                    <abbr title="{{ pair['rs1'].last_event_time }}">{{ pair['rs1'].persistency() }} {{ pair['rs1'].state }}</abbr><br>
+                    <abbr title="{{ pair['rs2'].last_event_time }}">{{ pair['rs2'].persistency() }} {{ pair['rs2'].state }}</abbr>
                 </small>
             </td>
         </tr>

@@ -1,5 +1,3 @@
-import re
-import paramiko
 from flask import Flask, render_template, request, redirect
 from models import RouteServer, Prefix
 
@@ -13,24 +11,21 @@ servers = {
 
 @app.route("/")
 def index():
-    return redirect("/summary/")
+    return redirect("/wix/summary/")
 
 
-@app.route("/summary/")
-def summary():
-
-    service = request.args.get('service', "wix")
-    if not service in ['fv', 'wix']:
-        service = "wix"
+@app.route("/<service>/summary/")
+def summary(service):
+    if service not in ['fv', 'wix']:
+        return redirect('/wix/summary/')
 
     family = request.args.get('family', "4")
-    if not family in ['4', '6']:
+    if family not in ['4', '6']:
         family = "4"
 
     rs1 = RouteServer(servers['rs1'], service, family)
     rs2 = RouteServer(servers['rs2'], service, family)
-    rs1.connect()
-    rs2.connect()
+
     rs1_peers = rs1.peers()
     rs2_peers = rs2.peers()
 
@@ -39,90 +34,99 @@ def summary():
     return render_template("summary.html",
                            pairs=pairs,
                            service=service,
-                           family=family)
+                           family=family,
+                           page='summary')
 
 
-@app.route("/peer/<peer>/routes/")
-def peer_routes(peer):
-    error = None
-    service = "wix"
-    rs1_peer = None
-    rs2_peer = None
+@app.route("/<service>/peer/<peer_id>/routes/")
+def peer_routes(service, peer_id):
+    if service not in ['wix', 'fv']:
+        return redirect('/')
+
+    filtered = False
 
     family = request.args.get('family', "4")
-    if not family in ['4', '6']:
+    if family not in ['4', '6']:
         family = "4"
 
-    peer_string = peer.strip()
-    wix_pattern = re.compile("^193\.106\.(112|113)\.[0-9]{1,3}$")
-    fv_pattern = re.compile("^85\.112\.(122|123)\.[0-9]{1,3}$")
+    rs1 = RouteServer(servers['rs1'], service, family)
+    rs2 = RouteServer(servers['rs2'], service, family)
 
-    if not wix_pattern.search(peer_string) and not fv_pattern.search(peer_string):
-        error = "The peer address %s is not correct." % peer_string
+    rs1_peer = rs1.peer(peer_id)
+    rs2_peer = rs2.peer(peer_id)
 
-    else:
-        if "193.106" in peer_string:
-            service = "wix"
-        else:
-            service = "fv"
-
-        rs1 = RouteServer(servers['rs1'], service, family)
-        rs2 = RouteServer(servers['rs2'], service, family)
-
-        rs1.peer(peer_string)
-        rs2.peer(peer_string)
-
-        rs1_peer = rs1._peers[0]
-        rs2_peer = rs2._peers[0]
+    rs1_routes = rs1.routes(peer_id, 'accepted')
+    rs2_routes = rs2.routes(peer_id, 'accepted')
 
     return render_template("peer_routes.html",
                            service=service,
                            family=family,
-                           peer_address=peer_string,
+                           peer_id=peer_id,
                            rs1=rs1,
                            rs2=rs2,
                            rs1_peer=rs1_peer,
                            rs2_peer=rs2_peer,
-                           peer=peer,
-                           error=error)
+                           rs1_routes=rs1_routes,
+                           rs2_routes=rs2_routes,
+                           filtered=filtered,
+                           peer=peer)
 
 
-@app.route("/peer/<peer>/")
-def peer(peer):
-    error = None
-    service = "wix"
-    rs1_peer = None
-    rs2_peer = None
+@app.route("/<service>/peer/<peer_id>/routes/rejected/")
+def peer_routes_rejected(service, peer_id):
+    if service not in ['wix', 'fv']:
+        return redirect('/')
+
+    filtered = True
 
     family = request.args.get('family', "4")
-    if not family in ['4', '6']:
+    if family not in ['4', '6']:
         family = "4"
 
-    peer_string = peer.strip()
-    wix_pattern = re.compile("^193\.106\.(112|113)\.[0-9]{1,3}$")
-    fv_pattern = re.compile("^85\.112\.(122|123)\.[0-9]{1,3}$")
+    rs1 = RouteServer(servers['rs1'], service, family)
+    rs2 = RouteServer(servers['rs2'], service, family)
 
-    if not wix_pattern.search(peer_string) and not fv_pattern.search(peer_string):
-        error = "The peer address %s is not correct." % peer_string
+    rs1_peer = rs1.peer(peer_id)
+    rs2_peer = rs2.peer(peer_id)
 
-    else:
-        if "193.106" in peer_string:
-            service = "wix"
-        else:
-            service = "fv"
+    rs1_routes = rs1.routes(peer_id, 'filtered')
+    rs2_routes = rs2.routes(peer_id, 'filtered')
 
-        rs1 = RouteServer(servers['rs1'], service, family)
-        rs2 = RouteServer(servers['rs2'], service, family)
-        rs1.connect()
-        rs2.connect()
+    return render_template("peer_routes.html",
+                           service=service,
+                           family=family,
+                           peer_id=peer_id,
+                           rs1=rs1,
+                           rs2=rs2,
+                           rs1_peer=rs1_peer,
+                           rs2_peer=rs2_peer,
+                           rs1_routes=rs1_routes,
+                           rs2_routes=rs2_routes,
+                           filtered=filtered,
+                           peer=peer)
 
-        rs1_peer = rs1.peer(peer_string)
-        rs2_peer = rs2.peer(peer_string)
+
+@app.route("/<service>/peer/<peer_id>/")
+def peer(service, peer_id):
+    error = None
+
+    if service not in ['wix', 'fv']:
+        return redirect('/')
+
+    family = request.args.get('family', "4")
+    if family not in ['4', '6']:
+        family = "4"
+
+    rs1 = RouteServer(servers['rs1'], service, family)
+    rs2 = RouteServer(servers['rs2'], service, family)
+
+    rs1_peer = rs1.peer(peer_id)
+    rs2_peer = rs2.peer(peer_id)
 
     return render_template("peer.html",
                            service=service,
                            family=family,
-                           peer_address=peer_string,
+                           peer_id=peer_id,
                            rs1=rs1,
                            rs2=rs2,
                            rs1_peer=rs1_peer,
@@ -145,6 +149,7 @@ def peers_pairs(rs1_peers, rs2_peers):
             'description': rs1_peer.description,
             'rs1': rs1_peer,
             'rs2': pair,
+            'peer_id': rs1_peer.peer_id,
         }
         pairs.append(twins)
         checked_values.append(rs1_peer.value)

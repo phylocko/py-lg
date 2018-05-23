@@ -12,11 +12,11 @@
     <div class="container">
         <ol class="breadcrumb">
             {% if service == "wix" %}
-                <li><a href="/summary/?service=wix">W-IX members</a></li>
+                <li><a href="/{{ service }}/summary/">W-IX members</a></li>
             {% else %}
-                <li><a href="/summary/?service=fv">Inet2 members</a></li>
+                <li><a href="/{{ service }}/summary/">Inet2 members</a></li>
             {% endif %}
-            <li class="active">{{ peer_address }}</li>
+            <li class="active">{{ peer_id }}</li>
         </ol>
 
         <div class="row">

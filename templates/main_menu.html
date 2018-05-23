@@ -1,9 +1,13 @@
+{% if page == 'summary' %}
+
 <ul class="nav navbar-nav">
-    <li {% if service == "fv" %} class="active" {% endif %}><a href="?service=fv&server={{ server }}&family={{ family }}"><b>Inet2</b></a></li>
-    <li {% if service == "wix" %} class="active" {% endif %}><a href="?service=wix&server={{ server }}&family={{ family }}"><b>W-IX</b></a></li>
+    <li {% if service == "fv" %} class="active" {% endif %}><a href="/fv/summary/?family={{ family }}"><b>Full View</b></a></li>
+    <li {% if service == "wix" %} class="active" {% endif %}><a href="/wix/summary/?family={{ family }}"><b>W-IX</b></a></li>
 </ul>
 
+{% endif %}
+
 <ul class="nav navbar-nav navbar-right">
-    <li {% if family == "4" %} class="active" {% endif %}><a href="?service={{ service }}&server={{ server }}&family=4">IPv4</a></li>
-    <li {% if family == "6" %} class="active" {% endif %}><a href="?service={{ service }}&server={{ server }}&family=6">IPv6</a></li>
+    <li {% if family == "4" %} class="active" {% endif %}><a href="?family=4">IPv4</a></li>
+    <li {% if family == "6" %} class="active" {% endif %}><a href="?family=6">IPv6</a></li>
 </ul>
