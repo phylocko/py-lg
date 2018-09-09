@@ -69,6 +69,28 @@ class RouteServer:
 
         return routes
 
+    def route(self, prefix=None, address=None):
+        if prefix or address:
+            if prefix:
+                bird_command = "show route %s all" % prefix
+            else:
+                print('address: %s' % address)
+                bird_command = "show route for %s all" % address
+        else:
+            return []
+
+        server_command = "echo '%s' | sudo birdc -s /var/run/bird%s.%s.ctl" % (bird_command, self.ip_version, self.service)
+        bird_dump = self._cmd(server_command)
+
+        prefixes = []
+
+        route = Route(dump=bird_dump, routes=prefixes)
+        for prefix_dump in self._parse__show_route_peer(bird_dump):
+            prefix = Prefix(prefix_dump, self.ip_version)
+            prefix.destination = route.prefix
+            prefixes.append(prefix)
+        return route
+
     def peers(self):
         bird_command = "show protocols all"
         server_command = "echo '%s' | sudo birdc -s /var/run/bird%s.%s.ctl" % (bird_command, self.ip_version, self.service)
@@ -94,25 +116,25 @@ class RouteServer:
 
         return peers[0]
 
-    def routes(self, peer_id, routes_type):
+    def prefixes(self, peer_id, rejected):
         bird_command = "show route protocol %s all" % peer_id
-        if routes_type == 'filtered':
+        if rejected == 'filtered':
             bird_command = "show route protocol %s filtered all" % peer_id
 
         server_command = "echo '%s' | sudo birdc -s /var/run/bird%s.%s.ctl | head -3000" % (bird_command, self.ip_version, self.service)
         bird_dump = self._cmd(server_command)
 
-        routes = []
-        for route_dump in self._parse__show_route_peer(bird_dump):
-            if len(routes) < 301:
-                route = Route(route_dump, self.ip_version)
-                if routes_type == 'filtered':
-                    route.filtered = True
-                routes.append(route)
-        return routes
+        prefixes = []
+        for prefix_dump in self._parse__show_route_peer(bird_dump):
+            if len(prefixes) < 301:
+                prefix = Prefix(prefix_dump, self.ip_version)
+                if rejected:
+                    prefix.filtered = True
+                prefixes.append(prefix)
+        return prefixes
 
 
-class Route:
+class Prefix:
     def __init__(self, dump, ip_version):
         self.prefix = None
         self.next_hop = None
@@ -127,6 +149,7 @@ class Route:
         self._dump = dump
         self._parse_dump()
         self.filtered = False
+        self.destination = None
 
     def _parse_dump(self):
         """
@@ -395,137 +418,12 @@ class Peer:
             return "%s days" % difference.days
 
 
-class Prefix:
-    """Prefix example:
-    BIRD 1.4.5 ready.
-    [?1034hbird> show route all 185.174.194.0/24
-    bird>
-    [K185.174.194.0/24   via 85.112.122.101 on br5 [peer_122101 2018-02-08 08:19:20] * (100) [AS60764i]
-        Type: BGP unicast univ
-        BGP.origin: IGP
-        BGP.as_path: 60764
-        BGP.next_hop: 85.112.122.101
-        BGP.local_pref: 130
-        BGP.community: (25478,1000) (25478,4016) (0,28709) (0,47541) (0,47542) (25478,19992) (50384,5013) (50384,5073) (50384,5513) (50384,5523) (50384,5533) (50384,5573) (50384,5583) (50384,5593)
-                       via 85.112.122.13 on br5 [peer_12213 2018-02-08 08:19:35] (100) [AS60764i]
-        Type: BGP unicast univ
-        BGP.origin: IGP
-        BGP.as_path: 20764 60764
-        BGP.next_hop: 85.112.122.13
-        BGP.med: 290
-        BGP.local_pref: 100
-        BGP.community: (25478,3002) (25478,3000) (20764,3002) (20764,3011) (20764,3021)
-                       via 85.112.122.20 on br5 [peer_12220 2018-01-30 12:51:37] (100) [AS60764i]
-        Type: BGP unicast univ
-        BGP.origin: IGP
-        BGP.as_path: 20764 60764
-        BGP.next_hop: 85.112.122.20
-        BGP.med: 295
-        BGP.local_pref: 100
-        BGP.community: (25478,3002) (25478,3000) (20764,3002) (20764,3011) (20764,3021)
-    bird>[K"""
-
-    _dump = None
-    _next_hops = []
-
-    def __init__(self):
-        self._fill_dump()
-        for dump in self._parse_dump():
-            next_hop = NextHop(dump)
-
-    def _fill_dump(self):
-        with open("prefix_output.txt") as f:
-            self._dump = f.read()
-
-    def _fill_next_hops(self):
-        for dump in self._parse_dump():
-            next_hop = NextHop(dump)
-            self._next_hops.append(next_hop)
-
-    def _parse_dump(self):
-        next_hops = []
-        next_hop = list()
-
-        next_prefix_pattern = re.compile("via [0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3} on")
-
-        for l in self._dump.splitlines():
-            if next_prefix_pattern.search(l):
-                if next_hop:
-                    next_hops.append(next_hop)
-                    next_hop = []
-                next_hop.append(l)
-            else:
-                if next_hop:
-                    next_hop.append(l)
-
-        if next_hop:
-            next_hops.append(next_hop)
-
-        return next_hops
-
-    def next_hops(self):
-        self._fill_next_hops()
-        return self._next_hops
-
-
-class NextHop:
-    """Example
-                       via 85.112.122.20 on br5 [peer_12220 2018-01-30 12:51:37] (100) [AS60764i]
-    Type: BGP unicast univ
-    BGP.origin: IGP
-    BGP.as_path: 20764 60764
-    BGP.next_hop: 85.112.122.20
-    BGP.med: 295
-    BGP.local_pref: 100
-    BGP.community: (25478,3002) (25478,3000) (20764,3002) (20764,3011) (20764,3021)
-    """
-
-    _dump = None
-
-    origin = None
-    as_path = None
-    next_hop = None
-    med = None
-    local_pref = None
-    community = []
-
-    def __init__(self, dump):
-        self._dump = dump
-        self._parse_dump()
-
-    def _parse_dump(self):
-        self.origin = self._parse_origin()
-        self.as_path = self._parse_as_path()
-        self.next_hop = self._parse_next_hop()
-        self.med = self._parse_med()
-        self.local_pref = self._parse_local_pref()
-        self.community = self._parse_community()
-
-    def _parse_origin(self):
-        return self._extract_word("BGP.origin", 1)
-
-    def _parse_as_path(self):
-        return "n/a"
-
-    def _parse_next_hop(self):
-        return self._extract_word("BGP.next_hop", 1)
-
-    def _parse_med(self):
-        return self._extract_word("BGP.med", 1)
-
-    def _parse_local_pref(self):
-        return self._extract_word("BGP.local_pref", 1)
-
-    def _parse_community(self):
-        return "n/a"
-
-    def _extract_word(self, pattern, position):
-        word = None
-        for l in self._dump:
-            if pattern in l:
-                parts = l.split()
-                word = parts[position]
-        return word
-
-    def __repr__(self):
-        return self.next_hop
+class Route:
+    def __init__(self, dump, routes):
+        self.prefix = None
+        for l in dump.splitlines():
+            pattern = re.compile('^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\/[0-9]{1,3}')
+            groups = pattern.findall(l)
+            if groups:
+                self.prefix = groups[0]
+        self.routes = routes

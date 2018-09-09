@@ -1,12 +1,8 @@
 <table class="table">
 
     {% for route in routes %}
-    {% if route.filtered %}
-    <tr class="filtered">
-        {% else %}
     <tr class="{% if route.preferred %}preferred preferred-heading{% else %}non-preferred non-preferred-heading{% endif %}">
 
-        {% endif%}
         <td class="asterisk">
             {% if route.preferred %}
             <span class="glyphicon glyphicon-menu-right" aria-hidden="true"></span>
@@ -15,21 +11,17 @@
             {% endif %}
         </td>
 
-        <td class="prefix"><b><a href="/{{ service }}/route/?prefix={{ route.prefix }}">{{ route.prefix }}</a></b></td>
+        <td><b>{{ route.destination }}</b></td>
 
         <td colspan="2">
             <ul class="list-inline">
-                <li>Next hop: <b>{{ route.next_hop }}</b></li>
+                <li><b>Next-hop: {{ route.next_hop }}</b></li>
             </ul>
         </td>
 
     </tr>
 
-    {% if route.filtered %}
-    <tr class="filtered">
-        {% else %}
     <tr class="{% if route.preferred %}preferred{% else %}non-preferred{% endif %}">
-    {% endif %}
         <td colspan="2"></td>
         <td colspan="2">
             <ul class="list-inline">
@@ -39,11 +31,7 @@
         </td>
     </tr>
 
-    {% if route.filtered %}
-    <tr class="filtered">
-        {% else %}
     <tr class="{% if route.preferred %}preferred{% else %}non-preferred{% endif %}">
-    {% endif %}
         <td></td>
         <td class="text-right">AS-Path</td>
         <td colspan="2">
@@ -54,11 +42,7 @@
     </tr>
 
 
-    {% if route.filtered %}
-    <tr class="filtered">
-        {% else %}
     <tr class="{% if route.preferred %}preferred{% else %}non-preferred{% endif %}">
-        {% endif %}
         <td></td>
         <td class="text-right">Community</td>
 

@@ -1,5 +1,7 @@
-<form method="GET" action="/search" class="navbar-form navbar-right">
+<form method="GET" action="/show" class="navbar-form navbar-right">
     <div class="form-group">
+        <input type="hidden" name="service" value="{{ service }}">
+        <input type="hidden" name="family" value="{{ family }}">
           <input id="meta_search"
                  type="text" name="search"
                  value="{{ search_string }}"

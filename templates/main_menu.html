@@ -5,6 +5,13 @@
     <li {% if service == "wix" %} class="active" {% endif %}><a href="/wix/summary/?family={{ family }}"><b>W-IX</b></a></li>
 </ul>
 
+{% elif page == 'route'%}
+
+<ul class="nav navbar-nav">
+    <li {% if service == "fv" %} class="active" {% endif %}><a href="/fv/route/?prefix={{ destination }}&family={{ family }}"><b>Full View</b></a></li>
+    <li {% if service == "wix" %} class="active" {% endif %}><a href="/wix/route/?prefix={{ destination }}&family={{ family }}"><b>W-IX</b></a></li>
+</ul>
+
 {% endif %}
 
 <ul class="nav navbar-nav navbar-right">

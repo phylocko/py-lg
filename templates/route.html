@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+
+<style>
+    .community {
+        background-color: #666666;
+        padding-left: 6px;
+        padding-right: 6px;
+        border-radius: 3px;
+        font-size: 12px;
+        color: #ebebeb;
+    }
+    .asterisk {
+        width: 30px;
+    }
+    .prefix {
+        width: 120px;
+    }
+    .preferred-heading {
+        background-color: #F0FFF1;
+    }
+    .non-preferred-heading {
+        background-color: #FFFDE3;
+    }
+    .filtered {
+        background-color: #F0EFEE;
+        color: #999999;
+    }
+</style>
+
+{% if error %}
+<div class="container text-center">
+    <b>{{ error }}</b>
+</div>
+
+{% else %}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-12">
+            <h3>Routes for {{ destination }}</h3>
+        </div>
+    </div>
+
+    <div class="row">
+
+        <div class="col-md-6">
+            <h4>Routes on RS1</h4>
+
+            {% with routes = rs1_route.routes %}
+                {% if routes %}
+                {% include 'routes_table.html' %}
+                {% else %}
+                <div class="alert alert-info" role="alert">{{ destination }} not in table</div>
+                {% endif %}
+            {% endwith %}
+
+
+        </div>
+
+        <div class="col-md-6">
+            <h4>Routes on RS2</h4>
+
+            {% with routes = rs2_route.routes %}
+                {% if routes %}
+                {% include 'routes_table.html' %}
+                {% else %}
+                <div class="alert alert-info" role="alert">{{ destination }} not in table</div>
+                {% endif %}
+            {% endwith %}
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endif %}
+
+{% endblock %}

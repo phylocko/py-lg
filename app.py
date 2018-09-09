@@ -1,5 +1,6 @@
+import ipaddress
+from models import RouteServer
 from flask import Flask, render_template, request, redirect
-from models import RouteServer, Prefix
 
 app = Flask(__name__)
 
@@ -39,7 +40,9 @@ def summary(service):
 
 
 @app.route("/<service>/peer/<peer_id>/routes/")
-def peer_routes(service, peer_id):
+def peer_prefixes(service, peer_id):
+    # TODO: Validate peer_id!
+
     if service not in ['wix', 'fv']:
         return redirect('/')
 
@@ -55,8 +58,8 @@ def peer_routes(service, peer_id):
     rs1_peer = rs1.peer(peer_id)
     rs2_peer = rs2.peer(peer_id)
 
-    rs1_routes = rs1.routes(peer_id, 'accepted')
-    rs2_routes = rs2.routes(peer_id, 'accepted')
+    rs1_routes = rs1.prefixes(peer_id, filtered)
+    rs2_routes = rs2.prefixes(peer_id, filtered)
 
     return render_template("peer_routes.html",
                            service=service,
@@ -74,6 +77,8 @@ def peer_routes(service, peer_id):
 
 @app.route("/<service>/peer/<peer_id>/routes/rejected/")
 def peer_routes_rejected(service, peer_id):
+    # TODO: Validate peer_id!
+
     if service not in ['wix', 'fv']:
         return redirect('/')
 
@@ -89,8 +94,8 @@ def peer_routes_rejected(service, peer_id):
     rs1_peer = rs1.peer(peer_id)
     rs2_peer = rs2.peer(peer_id)
 
-    rs1_routes = rs1.routes(peer_id, 'filtered')
-    rs2_routes = rs2.routes(peer_id, 'filtered')
+    rs1_routes = rs1.prefixes(peer_id, filtered)
+    rs2_routes = rs2.prefixes(peer_id, filtered)
 
     return render_template("peer_routes.html",
                            service=service,
@@ -106,10 +111,49 @@ def peer_routes_rejected(service, peer_id):
                            peer=peer)
 
 
+@app.route("/<service>/route/")
+def route(service):
+    if service not in ['wix', 'fv']:
+        return redirect('/')
+
+    family = request.args.get('family', "4")
+    if family not in ['4', '6']:
+        family = "4"
+
+    destination = request.args.get('prefix', None)
+
+    rs1, rs2 = None, None
+    rs1_route, rs2_route = None, None
+
+    prefix = None
+    address = None
+
+    if destination:
+        if '/' in destination:
+            prefix = destination
+        else:
+            address = destination
+
+        # TODO: Validate prefix!
+        rs1 = RouteServer(servers['rs1'], service, family)
+        rs2 = RouteServer(servers['rs2'], service, family)
+
+        rs1_route = rs1.route(prefix=prefix, address=address)
+        rs2_route = rs2.route(prefix=prefix, address=address)
+
+    return render_template("route.html",
+                           service=service,
+                           family=family,
+                           destination=destination,
+                           rs1=rs1,
+                           rs2=rs2,
+                           rs1_route=rs1_route,
+                           rs2_route=rs2_route,
+                           page='route')
+
+
 @app.route("/<service>/peer/<peer_id>/")
 def peer(service, peer_id):
-    error = None
-
     if service not in ['wix', 'fv']:
         return redirect('/')
 
@@ -131,8 +175,34 @@ def peer(service, peer_id):
                            rs2=rs2,
                            rs1_peer=rs1_peer,
                            rs2_peer=rs2_peer,
-                           peer=peer,
-                           error=error)
+                           peer=peer)
+
+
+@app.route("/show/")
+def show():
+    service = request.args.get('service', 'wix')
+    if service not in ['fv', 'wix']:
+        return redirect('/wix/summary/')
+
+    destination = request.args.get('search', '')
+
+    try:
+        network = ipaddress.ip_network(destination)
+    except ValueError as e:
+        return render_template('error.html', error='Wrong data given. %s' % e,
+                               search_string=destination,
+                               service=service,
+                               family=get_family(request))
+
+    if network.version == '4' and network.prefixlen == 32:
+        new_destination = str(network)
+
+    elif network.version == '6' and network.prefixlen == 128:
+        new_destination = str(network)
+    else:
+        new_destination = str(network.network_address)
+
+    return redirect('/%s/route/?prefix=%s&family=%s&search=%s' % (service, new_destination, network.version, destination))
 
 
 def peers_pairs(rs1_peers, rs2_peers):
@@ -175,6 +245,37 @@ def find_pair(neighbor_address, peers):
         if peer.neighbor_address == neighbor_address:
             return peer
     return None
+
+
+def get_service(r):
+    service = r.args.get('service', None)
+    if service not in ['wix', 'fv']:
+        service = None
+    return service
+
+
+def get_family(r):
+    family = r.args.get('family', '4')
+    if family not in ['4', '6']:
+        family = "4"
+    return family
+
+
+def destination(destination):
+    try:
+        network = ipaddress.ip_network(destination)
+    except ValueError as e:
+        raise ValueError('Wrong data given. %s' % e)
+
+    if network.version == '4' and network.prefixlen == 32:
+        new_destination = str(network)
+
+    elif network.version == '6' and network.prefixlen == 128:
+        new_destination = str(network)
+    else:
+        new_destination = str(network.network_address)
+
+    return new_destination
 
 
 if __name__ == "__main__":
