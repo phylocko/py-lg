@@ -1,19 +1,3 @@
-
-Developer's deployment
-
-mkdir -p venv/py-lg
-virtualenv --python=python3 venv/py-lg
-source venv/py-lg/bin/activate
-
-mkdir py-lg
-git clone git@gitlab.com:phylocko/py-lg.git py-lg
-pip install -r py-lg/requirements.txt
-
-# Edit you IPaddress and port in the end of app.py file
-
-
-
-
 # Py-LG
 
 iHome Looking Glass written on Python
