@@ -5,7 +5,7 @@ from flask import Flask, render_template, request, redirect
 app = Flask(__name__)
 
 servers = {
-    'rs1': 'mr-srv0',
+    'rs1': 'hostel.ihome.ru',
     'rs2': 'novosib-srv0'
 }
 
@@ -279,4 +279,4 @@ def destination(destination):
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5150)
+    app.run(host="85.112.118.20", port=5150)
