@@ -1,0 +1,26 @@
+<div class="btn-group" data-toggle="buttons">
+    <label class="btn btn-primary active" id="all_button">
+        <input type="radio" autocomplete="off" id="all_input" checked> All accepted
+    </label>
+    <label class="btn btn-primary" id="preferred_button">
+        <input type="radio" autocomplete="off" id="preferred_input"> Preferred
+    </label>
+    <label class="btn btn-primary" id="non_preferred_button">
+        <input type="radio" autocomplete="off" id="non_preferred_input"> Not preferred
+    </label>
+</div>
+
+<script>
+    $('#preferred_button').click(function () {
+        $('tr.preferred').show()
+        $('tr.non-preferred').hide()
+    })
+    $('#non_preferred_button').click(function () {
+        $('tr.preferred').hide()
+        $('tr.non-preferred').show()
+    })
+    $('#all_button').click(function () {
+        $('tr.preferred').show()
+        $('tr.non-preferred').show()
+    })
+</script>

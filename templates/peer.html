@@ -2,50 +2,50 @@
 
 {% block content %}
 
-{% if error %}
-<div class="container text-center">
-<b>{{ error }}</b>
-</div>
+    {% if error %}
+        <div class="container text-center">
+            <b>{{ error }}</b>
+        </div>
 
-{% else %}
+    {% else %}
 
-    <div class="container">
-        <ol class="breadcrumb">
-            {% if service == "wix" %}
-                <li><a href="/{{ service }}/summary/">W-IX members</a></li>
-            {% else %}
-                <li><a href="/{{ service }}/summary/">Inet2 members</a></li>
-            {% endif %}
-            <li class="active">{{ peer_id }}</li>
-        </ol>
+        <div class="container">
+            <ol class="breadcrumb">
+                {% if service == "wix" %}
+                    <li><a href="/{{ service }}/summary/">W-IX members</a></li>
+                {% else %}
+                    <li><a href="/{{ service }}/summary/">Inet2 members</a></li>
+                {% endif %}
+                <li class="active">{{ peer_id }}</li>
+            </ol>
 
-        <div class="row">
+            <div class="row">
 
-            <div class="col-md-6">
-                <div class="panel panel-default">
-                    <div class="panel-heading">
-                        <h3 class="panel-title">BGP info on Route Server 1</h3>
+                <div class="col-md-6">
+                    <div class="panel panel-default">
+                        <div class="panel-heading">
+                            <h3 class="panel-title">BGP info on Route Server #1</h3>
+                        </div>
+                        {% set peer = rs1_peer %}
+                        {% include "peer_data.html" %}
                     </div>
-                    {% set peer = rs1_peer%}
-                    {% include "peer_data.html" %}
                 </div>
-            </div>
 
 
-            <div class="col-md-6">
-                <div class="panel panel-default">
-                    <div class="panel-heading">
-                        <h3 class="panel-title">BGP info on Route Server 2</h3>
+                <div class="col-md-6">
+                    <div class="panel panel-default">
+                        <div class="panel-heading">
+                            <h3 class="panel-title">BGP info on Route Server #2</h3>
+                        </div>
+                        {% set peer = rs2_peer %}
+                        {% include "peer_data.html" %}
                     </div>
-                    {% set peer = rs2_peer%}
-                    {% include "peer_data.html" %}
                 </div>
+
             </div>
 
         </div>
 
-    </div>
-
-{% endif %}
+    {% endif %}
 
 {% endblock %}

@@ -1,4 +1,4 @@
-<table class="table">
+<table class="table table-condensed">
 
     {% for route in routes %}
     <tr class="{% if route.preferred %}preferred preferred-heading{% else %}non-preferred non-preferred-heading{% endif %}">
@@ -26,7 +26,7 @@
         <td colspan="2">
             <ul class="list-inline">
                 <li>Origin: <b>{{ route.origin }}</b></li>
-                <li>Localpref: <label class="label label-danger">{{ route.local_pref }}</label></li>
+                <li>Localpref: <label class="label label-default">{{ route.local_pref }}</label></li>
             </ul>
         </td>
     </tr>

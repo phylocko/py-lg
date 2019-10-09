@@ -1,6 +1,6 @@
-    <table class="table">
+    <table class="table table-condensed">
         <tr>
-            <tr><td colspan="2"><h3>Session State</h3></td></tr>
+            <tr><td colspan="2"><h3 >Session State</h3></td></tr>
 
             <tr>
 
@@ -41,13 +41,10 @@
                     <a href="http://apps.db.ripe.net/search/query.html?sources=RIPE_NCC&searchtext=AS{{ peer.neighbor_as }}&submit=Search">{{ peer.neighbor_as }}</a>
                 </td>
             </tr>
-            <tr><td>Description</td><td class="active">{{ peer.description }}</td></tr>
-            <tr><td>Preference</td><td class="active">{{ peer.preference }}</td></tr>
-            <tr><td>Import limit</td><td class="active">{{ peer.import_limit }}</td></tr>
-            <tr><td>Route limit</td><td class="active">{{ peer.route_limit }}</td></tr>
-            <tr><td>Hold timer</td><td class="active">{{ peer.hold_timer }}</td></tr>
-            <tr><td>Keepalive timer</td><td class="active">{{ peer.keepalive_timer }}</td></tr>
-
-
-        </tr>
-    </table>
+            <tr><td>Description</td><td class="active">{{ peer.description or '—' }}</td></tr>
+            <tr><td>Preference</td><td class="active">{{ peer.preference or '—' }}</td></tr>
+            <tr><td>Import limit</td><td class="active">{{ peer.import_limit or '—' }}</td></tr>
+            <tr><td>Route limit</td><td class="active">{{ peer.route_limit or '—' }}</td></tr>
+            <tr><td>Hold timer</td><td class="active">{{ peer.hold_timer or '—' }}</td></tr>
+            <tr><td>Keepalive timer</td><td class="active">{{ peer.keepalive_timer or '—' }}</td></tr>
+        </table>

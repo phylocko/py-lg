@@ -2,90 +2,89 @@
 
 {% block content %}
 
-{% if not pairs %}
+    {% if not pairs %}
 
-<b>The LG is currently not available. Please come back later.</b>
+        <b>The LG is currently not available. Please come back later.</b>
 
-{% else %}
+    {% else %}
 
-<div class="container">
-    <table class="table table-stripped">
-        <thead>
-        <th>Netname</th>
-        <th>ASN</th>
-        <th>Address</a></th>
-        <th>State</b></th>
-        <th class="text-right">Accepted</th>
-        <th class="text-right">Rejected</th>
-        <th>Persistency</th>
-        </thead>
+        <div class="container">
+            <table class="table table-stripped">
+                <thead>
+                <th>Netname</th>
+                <th>ASN</th>
+                <th>Address</th>
+                <th>State</th>
+                <th class="text-right">Accepted</th>
+                <th class="text-right">Rejected</th>
+                <th>Persistency</th>
+                </thead>
 
-        <tbody>
-        {% for pair in pairs|sort(attribute="value") %}
-        <tr>
-            <td>
-                <b>{{ pair.description }}</b>
-            </td>
-            <td>
-                <b><a href="http://apps.db.ripe.net/search/query.html?sources=RIPE_NCC&searchtext=AS{{ pair.neighbor_as }}&submit=Search">{{
-                    pair.neighbor_as }}</a></b>
-            </td>
-            <td>
+                <tbody>
+                {% for pair in pairs|sort(attribute="value") %}
+                    <tr>
+                        <td>
+                            <b>{{ pair.description }}</b>
+                        </td>
+                        <td>
+                            <b><a href="http://apps.db.ripe.net/search/query.html?sources=RIPE_NCC&searchtext=AS{{ pair.neighbor_as }}&submit=Search">{{ pair.neighbor_as }}</a></b>
+                        </td>
+                        <td>
 
-                <a href="/{{ service }}/peer/{{ pair.peer_id }}/?family={{ family }}">{{ pair.neighbor_address }}</a>
+                            <a href="/{{ service }}/peer/{{ pair.peer_id }}/?family={{ family }}">{{ pair.neighbor_address }}</a>
 
-            </td>
+                        </td>
 
-            <td class="active">
+                        <td class="active">
 
-                {% if pair['rs1'] %}
-                {% if pair['rs1'].state == "up" %}
-                <span class="text-success"><b>Up</b></span>
-                {% else %}
-                <span class="text-danger">Down</span>
-                {% endif %}
-                {% else %}
-                —
-                {% endif %}
+                            {% if pair['rs1'] %}
+                                {% if pair['rs1'].state == "up" %}
+                                    <span class="text-success"><b>Up</b></span>
+                                {% else %}
+                                    <span class="text-danger">Down</span>
+                                {% endif %}
+                            {% else %}
+                                —
+                            {% endif %}
 
-                <br>
+                            <br>
 
-                {% if pair['rs2'] %}
-                {% if pair['rs2'].state == "up" %}
-                <span class="text-success"><b>Up</b></span>
-                {% else %}
-                <span class="text-danger">Down</span>
-                {% endif %}
-                {% else %}
-                —
-                {% endif %}
+                            {% if pair['rs2'] %}
+                                {% if pair['rs2'].state == "up" %}
+                                    <span class="text-success"><b>Up</b></span>
+                                {% else %}
+                                    <span class="text-danger">Down</span>
+                                {% endif %}
+                            {% else %}
+                                —
+                            {% endif %}
 
 
-            </td>
+                        </td>
 
-            <td class="text-right">
-                <a href="/{{ service }}/peer/{{ pair['rs1'].peer_id }}/routes/?family={{ family }}">{{ pair['rs1'].imported_routes }}</a><br>
-                <a href="/{{ service }}/peer/{{ pair['rs2'].peer_id }}/routes/?family={{ family }}">{{ pair['rs2'].imported_routes }}</a>
-            </td>
+                        <td class="text-right">
+                            <a href="/{{ service }}/peer/{{ pair['rs1'].peer_id }}/routes/?family={{ family }}">{{ pair['rs1'].imported_routes }}</a><br>
+                            <a href="/{{ service }}/peer/{{ pair['rs2'].peer_id }}/routes/?family={{ family }}">{{ pair['rs2'].imported_routes }}</a>
+                        </td>
 
-            <td class="text-muted text-right">
-                <a href="/{{ service }}/peer/{{ pair['rs1'].peer_id }}/routes/rejected/?family={{ family }}">{{ pair['rs1'].filtered_routes }}</a><br>
-                <a href="/{{ service }}/peer/{{ pair['rs2'].peer_id }}/routes/rejected/?family={{ family }}">{{ pair['rs2'].filtered_routes }}</a>
-            </td>
+                        <td class="text-muted text-right">
+                            <a href="/{{ service }}/peer/{{ pair['rs1'].peer_id }}/routes/rejected/?family={{ family }}">{{ pair['rs1'].filtered_routes }}</a><br>
+                            <a href="/{{ service }}/peer/{{ pair['rs2'].peer_id }}/routes/rejected/?family={{ family }}">{{ pair['rs2'].filtered_routes }}</a>
+                        </td>
 
-            <td class="text-muted">
-                <small>
-                    <abbr title="{{ pair['rs1'].last_event_time }}">{{ pair['rs1'].persistency() }} {{ pair['rs1'].state }}</abbr><br>
-                    <abbr title="{{ pair['rs2'].last_event_time }}">{{ pair['rs2'].persistency() }} {{ pair['rs2'].state }}</abbr>
-                </small>
-            </td>
-        </tr>
-        {% endfor %}
-        </tbody>
-    </table>
-</div>
+                        <td class="text-muted">
+                            <small>
+                                <abbr title="{{ pair['rs1'].last_event_time }}">{{ pair['rs1'].persistency() }} {{ pair['rs1'].state }}</abbr><br>
+                                <abbr title="{{ pair['rs2'].last_event_time }}">{{ pair['rs2'].persistency() }} {{ pair['rs2'].state }}</abbr>
+                            </small>
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
 
-{% endif %}
+    {% endif %}
 
 
 {% endblock %}

@@ -32,23 +32,24 @@ class RouteServer:
         return bird_dump_bytes.decode("utf-8")
 
     def _parse__show_protocols(self, bird_dump):
-        peers = []
-        peer = list()
+        peers_lines = []
+        peer_lines = []
 
         for l in bird_dump.splitlines():
             if l[0:5] == "peer_":
-                if peer:
-                    peers.append(peer)
-                    peer = []
-                peer.append(l)
+                if peer_lines:
+                    peers_lines.append(peer_lines)
+                    peer_lines = []
+                peer_lines.append(l)
             else:
-                if peer:
-                    peer.append(l)
+                if peer_lines:
+                    peer_lines.append(l)
 
-        if peer:
-            peers.append(peer)
+        if peer_lines:
+            peers_lines.append(peer_lines)
 
-        return peers
+        print(peers_lines)
+        return peers_lines
 
     def _parse__show_route_peer(self, bird_dump):
         routes = []
@@ -79,7 +80,8 @@ class RouteServer:
         else:
             return []
 
-        server_command = "echo '%s' | sudo birdc -s /var/run/bird%s.%s.ctl" % (bird_command, self.ip_version, self.service)
+        server_command = "echo '%s' | sudo birdc -s /var/run/bird%s.%s.ctl" % (
+            bird_command, self.ip_version, self.service)
         bird_dump = self._cmd(server_command)
 
         prefixes = []
@@ -93,7 +95,8 @@ class RouteServer:
 
     def peers(self):
         bird_command = "show protocols all"
-        server_command = "echo '%s' | sudo birdc -s /var/run/bird%s.%s.ctl" % (bird_command, self.ip_version, self.service)
+        server_command = "echo '%s' | sudo birdc -s /var/run/bird%s.%s.ctl" % (
+            bird_command, self.ip_version, self.service)
         bird_dump = self._cmd(server_command)
 
         peers = []
@@ -106,7 +109,8 @@ class RouteServer:
 
     def peer(self, peer_id):
         bird_command = "show protocols all %s" % peer_id
-        server_command = "echo '%s' | sudo birdc -s /var/run/bird%s.%s.ctl" % (bird_command, self.ip_version, self.service)
+        server_command = "echo '%s' | sudo birdc -s /var/run/bird%s.%s.ctl" % (
+            bird_command, self.ip_version, self.service)
         bird_dump = self._cmd(server_command)
         peers = []
         for peer_dump in self._parse__show_protocols(bird_dump):
@@ -118,10 +122,12 @@ class RouteServer:
 
     def prefixes(self, peer_id, rejected):
         bird_command = "show route protocol %s all" % peer_id
-        if rejected == 'filtered':
+        if rejected:
             bird_command = "show route protocol %s filtered all" % peer_id
 
-        server_command = "echo '%s' | sudo birdc -s /var/run/bird%s.%s.ctl | head -3000" % (bird_command, self.ip_version, self.service)
+        server_command = "echo '%s' | sudo birdc -s /var/run/bird%s.%s.ctl | head -3000" % (bird_command,
+                                                                                            self.ip_version,
+                                                                                            self.service)
         bird_dump = self._cmd(server_command)
 
         prefixes = []
