@@ -8,13 +8,17 @@
 {% elif page == 'route'%}
 
 <ul class="nav navbar-nav">
-    <li {% if service == "fv" %} class="active" {% endif %}><a href="/fv/route/?prefix={{ destination }}&family={{ family }}"><b>Full View</b></a></li>
-    <li {% if service == "wix" %} class="active" {% endif %}><a href="/wix/route/?prefix={{ destination }}&family={{ family }}"><b>W-IX</b></a></li>
+    <li {% if service == "fv" %} class="active" {% endif %}><a href="/fv/route/?destination={{ destination }}&family={{ family }}"><b>Full View</b></a></li>
+    <li {% if service == "wix" %} class="active" {% endif %}><a href="/wix/route/?destination={{ destination }}&family={{ family }}"><b>W-IX</b></a></li>
 </ul>
 
 {% endif %}
 
 <ul class="nav navbar-nav navbar-right">
-    <li {% if family == "4" %} class="active" {% endif %}><a href="?family=4">IPv4</a></li>
-    <li {% if family == "6" %} class="active" {% endif %}><a href="?family=6">IPv6</a></li>
+{% if page == 'route' %}
+    <li class="active"><a>{% if family == 6 %}IPv6{% else %}IPv4{% endif %}</a></li>
+{% else %}
+    <li {% if family == 4 %} class="active" {% endif %}><a href="?family=4">IPv4</a></li>
+    <li {% if family == 6 %} class="active" {% endif %}><a href="?family=6">IPv6</a></li>
+{% endif %}
 </ul>

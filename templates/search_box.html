@@ -1,23 +1,23 @@
-<form method="GET" action="/show" class="navbar-form navbar-right">
+<form method="GET" action="/search" class="navbar-form navbar-right">
     <div class="form-group">
         <input type="hidden" name="service" value="{{ service }}">
         <input type="hidden" name="family" value="{{ family }}">
-          <input id="meta_search"
-                 type="text" name="search"
-                 value="{{ search_string }}"
-                 class="form-control"
-                 placeholder="Prefix or Address">
+        <input id="meta_search"
+               type="text" name="search"
+               value="{{ search_string }}"
+               class="form-control"
+               placeholder="Prefix or Address">
     </div>
     <button type="submit" class="btn btn-primary">Show</button>
 </form>
 
 <script>
-var meta_input = document.getElementById("meta_search");
-var form = document.querySelector('form');
-$( document ).on( 'keydown', function ( e ) {
-    if ( e.keyCode === 27 ) {
-        meta_input.focus();
-        form.reset();
-    }
-});
+    var meta_input = document.getElementById("meta_search");
+    var form = document.querySelector('form');
+    $(document).on('keydown', function (e) {
+        if (e.keyCode === 27) {
+            meta_input.focus();
+            form.reset();
+        }
+    });
 </script>

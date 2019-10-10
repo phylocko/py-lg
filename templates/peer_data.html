@@ -1,50 +1,87 @@
+{% if peer %}
+
     <table class="table table-condensed">
         <tr>
-            <tr><td colspan="2"><h3 >Session State</h3></td></tr>
+            <td colspan="2"><h3>Session State</h3></td>
+        </tr>
 
-            <tr>
+        <tr>
 
             {% if peer.state == "up" %}
-                    <td colspan="2" class="success"><b>{{ peer.bgp_state }}</b> since {{ peer.last_event_time }}</td>
+                <td colspan="2" class="success"><b>{{ peer.bgp_state }}</b> since {{ peer.last_event_time }}</td>
             {% elif peer.state == "feed" %}
-                    <td colspan="2" class="warning"><b>{{ peer.bgp_state }}</b> since {{ peer.last_event_time }}</td>
+                <td colspan="2" class="warning"><b>{{ peer.bgp_state }}</b> since {{ peer.last_event_time }}</td>
             {% else %}
                 <td colspan="2" class="danger"><b>{{ peer.bgp_state_details }}</b> since {{ peer.last_event_time }}</td>
             {% endif %}
-            </tr>
+        </tr>
 
 
-            <tr><td colspan="2"><h3>Prefixes</h3></td></tr>
+        <tr>
+            <td colspan="2"><h3>Prefixes</h3></td>
+        </tr>
 
-            <tr>
-                <td class="warning text-right">Imported</td>
-                <td class="active"><b>{{ peer.imported_routes }}</b> <a class="pull-right" href="routes/?family={{ family }}">View accepted routes</a></td>
-            </tr>
-            <tr>
-                <td class="success text-right">Preferred</td>
-                <td class="active text-success"><b>{{ peer.preferred_routes }}</b></td>
-            </tr>
-            <tr>
-                <td class="danger text-right">Filtered</td>
-                <td class="active text-danger"><b>{{ peer.filtered_routes }}</b> <a class="pull-right" href="routes/rejected/?family={{ family }}">View rejected routes</a></td>
-            </tr>
-            <tr>
-                <td class="active text-right">Exported</td>
-                <td class="active">{{ peer.exported_routes }}</td>
-            </tr>
+        <tr>
+            <td class="warning text-right">Imported</td>
+            <td class="active"><b>{{ peer.imported_routes }}</b>
+                <a class="pull-right" href="routes/?family={{ family }}">View accepted routes</a></td>
+        </tr>
+        <tr>
+            <td class="success text-right">Preferred</td>
+            <td class="active text-success"><b>{{ peer.preferred_routes }}</b></td>
+        </tr>
+        <tr>
+            <td class="danger text-right">Filtered</td>
+            <td class="active text-danger"><b>{{ peer.filtered_routes }}</b>
+                <a class="pull-right" href="routes/rejected/?family={{ family }}">View rejected routes</a></td>
+        </tr>
+        <tr>
+            <td class="active text-right">Exported</td>
+            <td class="active">{{ peer.exported_routes }}</td>
+        </tr>
 
-            <tr><td colspan="2"><h3>Session parameters</h3></td></tr>
-            <tr><td>Neighbor address</td><td class="active">{{ peer.neighbor_address }}</td></tr>
-            <tr>
-                <td>Peer AS</td>
-                <td class="active">
-                    <a href="http://apps.db.ripe.net/search/query.html?sources=RIPE_NCC&searchtext=AS{{ peer.neighbor_as }}&submit=Search">{{ peer.neighbor_as }}</a>
-                </td>
-            </tr>
-            <tr><td>Description</td><td class="active">{{ peer.description or '—' }}</td></tr>
-            <tr><td>Preference</td><td class="active">{{ peer.preference or '—' }}</td></tr>
-            <tr><td>Import limit</td><td class="active">{{ peer.import_limit or '—' }}</td></tr>
-            <tr><td>Route limit</td><td class="active">{{ peer.route_limit or '—' }}</td></tr>
-            <tr><td>Hold timer</td><td class="active">{{ peer.hold_timer or '—' }}</td></tr>
-            <tr><td>Keepalive timer</td><td class="active">{{ peer.keepalive_timer or '—' }}</td></tr>
-        </table>
+        <tr>
+            <td colspan="2"><h3>Session parameters</h3></td>
+        </tr>
+        <tr>
+            <td>Neighbor address</td>
+            <td class="active">{{ peer.neighbor_address }}</td>
+        </tr>
+        <tr>
+            <td>Peer AS</td>
+            <td class="active">
+                <a href="http://apps.db.ripe.net/search/query.html?sources=RIPE_NCC&searchtext=AS{{ peer.neighbor_as }}&submit=Search">{{ peer.neighbor_as }}</a>
+            </td>
+        </tr>
+        <tr>
+            <td>Description</td>
+            <td class="active">{{ peer.description or '—' }}</td>
+        </tr>
+        <tr>
+            <td>Preference</td>
+            <td class="active">{{ peer.preference or '—' }}</td>
+        </tr>
+        <tr>
+            <td>Import limit</td>
+            <td class="active">{{ peer.import_limit or '—' }}</td>
+        </tr>
+        <tr>
+            <td>Route limit</td>
+            <td class="active">{{ peer.route_limit or '—' }}</td>
+        </tr>
+        <tr>
+            <td>Hold timer</td>
+            <td class="active">{{ peer.hold_timer or '—' }}</td>
+        </tr>
+        <tr>
+            <td>Keepalive timer</td>
+            <td class="active">{{ peer.keepalive_timer or '—' }}</td>
+        </tr>
+    </table>
+
+{% else %}
+    <div class="panel-body text-center text-muted">
+        Peer does not exist
+    </div>
+
+{% endif %}

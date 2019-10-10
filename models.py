@@ -4,8 +4,15 @@ from datetime import datetime
 from ipaddress import IPv4Address, IPv6Address
 
 
+class ParsingError(Exception):
+    pass
+
+
 class RouteServer:
     def __init__(self, server=None, service=None, ip_version=None):
+        if ip_version not in [4, 6]:
+            raise ValueError('Wrong IP version given')
+
         self._session = None
         self.server = None
         self.service = None
@@ -48,7 +55,6 @@ class RouteServer:
         if peer_lines:
             peers_lines.append(peer_lines)
 
-        print(peers_lines)
         return peers_lines
 
     def _parse__show_route_peer(self, bird_dump):
@@ -75,7 +81,6 @@ class RouteServer:
             if prefix:
                 bird_command = "show route %s all" % prefix
             else:
-                print('address: %s' % address)
                 bird_command = "show route for %s all" % address
         else:
             return []
@@ -100,11 +105,14 @@ class RouteServer:
         bird_dump = self._cmd(server_command)
 
         peers = []
-        for peer_dump in self._parse__show_protocols(bird_dump):
-            peer = Peer()
-            peer.fill_data(peer_dump, self.ip_version)
-            peers.append(peer)
-
+        protocols_dump = self._parse__show_protocols(bird_dump)
+        for peer_dump in protocols_dump:
+            try:
+                peer = Peer(peer_dump, self.ip_version)
+            except ParsingError as e:
+                continue
+            else:
+                peers.append(peer)
         return peers
 
     def peer(self, peer_id):
@@ -112,13 +120,20 @@ class RouteServer:
         server_command = "echo '%s' | sudo birdc -s /var/run/bird%s.%s.ctl" % (
             bird_command, self.ip_version, self.service)
         bird_dump = self._cmd(server_command)
-        peers = []
-        for peer_dump in self._parse__show_protocols(bird_dump):
-            peer = Peer()
-            peer.fill_data(peer_dump, self.ip_version)
-            peers.append(peer)
 
-        return peers[0]
+        peers = []
+        parsed_protocols = self._parse__show_protocols(bird_dump)
+        for peer_dump in parsed_protocols:
+            try:
+                peer = Peer(peer_dump, self.ip_version)
+            except ParsingError as e:
+                pass
+            else:
+                peers.append(peer)
+
+        if peers:
+            return peers[0]
+        return None
 
     def prefixes(self, peer_id, rejected):
         bird_command = "show route protocol %s all" % peer_id
@@ -236,7 +251,7 @@ class Peer:
 
     _dump = None
 
-    ip_version = 0
+    ip_version = None
     peer_id = None
     state = None
     bgp_state = None
@@ -256,6 +271,11 @@ class Peer:
     hold_timer = None
     keepalive_timer = None
     value = None
+
+    def __init__(self, dump, ip_version):
+        if ip_version not in [4, 6]:
+            raise ValueError('No IP version given')
+        self.fill_data(dump, ip_version)
 
     def fill_data(self, dump, ip_version):
         self.ip_version = int(ip_version)
@@ -291,18 +311,15 @@ class Peer:
             try:
                 ip_address = IPv4Address(self.neighbor_address)
                 self.value = int(ip_address)
-            except:
-                self.value = 0
+            except Exception as e:
+                raise ParsingError('Wrong peer RS dump given')
 
         elif self.ip_version == 6:
             try:
                 ip_address = IPv6Address(self.neighbor_address)
                 self.value = int(ip_address)
-            except:
-                self.value = 0
-
-        else:
-            self.value = 0
+            except Exception as e:
+                raise ParsingError('Wrong peer RS dump given')
 
     def _parse_peer_id(self):
         l = self._dump[0]
@@ -359,6 +376,7 @@ class Peer:
             if result:
                 parts = result.group().split()
                 return parts[0]
+            return 0
 
     def _parse_filtered_routes(self):
         filtered_pattern = re.compile("[0-9]{1,10} filtered")
@@ -367,6 +385,7 @@ class Peer:
             if result:
                 parts = result.group().split()
                 return parts[0]
+        return 0
 
     def _parse_exported_routes(self):
         filtered_pattern = re.compile("[0-9]{1,10} exported")
@@ -375,6 +394,7 @@ class Peer:
             if result:
                 parts = result.group().split()
                 return parts[0]
+        return 0
 
     def _parse_preferred_routes(self):
         filtered_pattern = re.compile("[0-9]{1,10} preferred")
@@ -383,6 +403,7 @@ class Peer:
             if result:
                 parts = result.group().split()
                 return parts[0]
+        return 0
 
     def _parse_neighbor_address(self):
         return self._extract_word("Neighbor address", 2)

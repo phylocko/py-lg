@@ -44,7 +44,11 @@
 
         <div class="container-fluid">
             <ol class="breadcrumb">
-                <li><a href="/{{ service }}/summary/">{{ service }} members</a></li>
+                {% if service == "wix" %}
+                    <li><a href="/{{ service }}/summary/">W-IX peers</a></li>
+                {% else %}
+                    <li><a href="/{{ service }}/summary/">Full View peers</a></li>
+                {% endif %}
                 <li><a href="/{{ service }}/peer/{{ peer_id }}/">{{ peer_id }}</a></li>
                 <li class="active">{% if rejected_mode %}Rejected{% else %}Accepted{% endif %} routes</li>
             </ol>
