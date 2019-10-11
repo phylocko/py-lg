@@ -183,6 +183,7 @@ class Prefix:
         self.local_pref = self._extract_word('BGP.local_pref', 1)
         for c in self._parse_communities():
             self.communities.append(c)
+        self.communities = sorted(self.communities)
         self.as_path = self._parse_as_path()
         self.preferred = self._parse_preferred()
 
@@ -297,10 +298,10 @@ class Peer:
         self.preference = self._parse_preference()
         self.import_limit = self._parse_import_limit()
 
-        self.imported_routes = int(self._parse_imported_routes())
-        self.filtered_routes = int(self._parse_filtered_routes())
-        self.exported_routes = int(self._parse_exported_routes())
-        self.preferred_routes = int(self._parse_preferred_routes())
+        self.imported_routes, \
+        self.filtered_routes, \
+        self.exported_routes, \
+        self.preferred_routes = self._parse_processed_routes_count()
 
         self.neighbor_address = self._parse_neighbor_address()
         self.neighbor_as = self._parse_neighbor_as()
@@ -371,41 +372,41 @@ class Peer:
     def _parse_import_limit(self):
         return self._extract_word("Import limit", 2)
 
-    def _parse_imported_routes(self):
-        filtered_pattern = re.compile("[0-9]{1,10} imported")
+    def _parse_processed_routes_count(self):
+        filtered_pattern = re.compile(r'(\d*) imported, (\d*) filtered, (\d*) exported, (\d*) preferred')
         for l in self._dump:
             result = filtered_pattern.search(l)
             if result:
-                parts = result.group().split()
-                return parts[0]
-            return 0
+                groups = result.groups()
+                return [int(x) for x in groups]
+        return 0, 0, 0, 0
 
-    def _parse_filtered_routes(self):
-        filtered_pattern = re.compile("[0-9]{1,10} filtered")
-        for l in self._dump:
-            result = filtered_pattern.search(l)
-            if result:
-                parts = result.group().split()
-                return parts[0]
-        return 0
+    # def _parse_filtered_routes(self):
+    #     filtered_pattern = re.compile("[0-9]{1,10} filtered")
+    #     for l in self._dump:
+    #         result = filtered_pattern.search(l)
+    #         if result:
+    #             parts = result.group().split()
+    #             return parts[0]
+    #     return 0
 
-    def _parse_exported_routes(self):
-        filtered_pattern = re.compile("[0-9]{1,10} exported")
-        for l in self._dump:
-            result = filtered_pattern.search(l)
-            if result:
-                parts = result.group().split()
-                return parts[0]
-        return 0
+    # def _parse_exported_routes(self):
+    #     filtered_pattern = re.compile("[0-9]{1,10} exported")
+    #     for l in self._dump:
+    #         result = filtered_pattern.search(l)
+    #         if result:
+    #             parts = result.group().split()
+    #             return parts[0]
+    #     return 0
 
-    def _parse_preferred_routes(self):
-        filtered_pattern = re.compile("[0-9]{1,10} preferred")
-        for l in self._dump:
-            result = filtered_pattern.search(l)
-            if result:
-                parts = result.group().split()
-                return parts[0]
-        return 0
+    # def _parse_preferred_routes(self):
+    #     filtered_pattern = re.compile("[0-9]{1,10} preferred")
+    #     for l in self._dump:
+    #         result = filtered_pattern.search(l)
+    #         if result:
+    #             parts = result.group().split()
+    #             return parts[0]
+    #     return 0
 
     def _parse_neighbor_address(self):
         return self._extract_word("Neighbor address", 2)

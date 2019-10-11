@@ -15,7 +15,7 @@
         {% endif %}
     </td>
 
-    <td class="prefix"><b><a href="/{{ service }}/route/?prefix={{ route.prefix }}">{{ route.prefix }}</a></b></td>
+    <td class="prefix"><b><a href="/{{ service }}/route/?destination={{ route.prefix }}">{{ route.prefix }}</a></b></td>
 
     <td colspan="2">
         <ul class="list-inline">
@@ -35,7 +35,7 @@
     <td colspan="2">
         <ul class="list-inline">
             <li>Origin: <b>{{ route.origin }}</b></li>
-            <li>Localpref: <label class="label label-default">{{ route.local_pref }}</label></li>
+            <li>Localpref: <label class="label label-primary">{{ route.local_pref }}</label></li>
         </ul>
     </td>
     </tr>
@@ -67,7 +67,7 @@
     <td colspan="2">
         <small>
             {% for c in route.communities %}
-                <label class="label label-info">{{ c }}</label>
+                <label class="label label-default">{{ c }}</label>
             {% endfor %}
         </small>
     </td>

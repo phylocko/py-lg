@@ -53,21 +53,26 @@
                 <li class="active">{% if rejected_mode %}Rejected{% else %}Accepted{% endif %} routes</li>
             </ol>
 
-            {% if rejected_mode %}
+            <div class="row">
+                <div class="col-md-6">
+                    {% if rejected_mode %}
+                        <a class="btn btn-success" href="/{{ service }}/peer/{{ peer_id }}/routes/?family={{ family }}">Show accepted routes</a>
+                    {% else %}
 
-                <div class="text-right">
-                    <a class="btn btn-sm btn-success" href="/{{ service }}/peer/{{ peer_id }}/routes/?family={{ family }}">Show accepted routes</a>
+                        {% if rs1_routes|length > 3 or rs2_routes|length > 3 %}
+                            {% include 'routes_display_radio.html' %}
+                        {% endif %}
+
+                    {% endif %}
                 </div>
 
-            {% else %}
+                <div class="col-md-6 text-right">
+                    {% if not rejected_mode %}
+                        <a class="btn btn-warning" href="/{{ service }}/peer/{{ peer_id }}/routes/rejected/?family={{ family }}">Show rejected routes</a>
+                    {% endif %}
+                </div>
 
-                {% if rs1_routes|length > 3 or rs2_routes|length > 3 %}
-                    {% include 'routes_display_radio.html' %}
-                {% endif %}
-
-                <a class="pull-right btn btn-sm btn-warning" href="/{{ service }}/peer/{{ peer_id }}/routes/rejected/?family={{ family }}">Show rejected routes</a>
-
-            {% endif %}
+            </div>
 
             <div class="row">
 

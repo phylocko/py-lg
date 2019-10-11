@@ -4,19 +4,8 @@
 
 
 <style>
-    .community {
-        background-color: #666666;
-        padding-left: 6px;
-        padding-right: 6px;
-        border-radius: 3px;
-        font-size: 12px;
-        color: #ebebeb;
-    }
     .asterisk {
         width: 30px;
-    }
-    .prefix {
-        width: 120px;
     }
     .preferred-heading {
         background-color: #F0FFF1;
@@ -38,6 +27,17 @@
 {% else %}
 
 <div class="container-fluid">
+
+    <ol class="breadcrumb">
+        {% if service == "wix" %}
+            <li><a href="/{{ service }}/summary/">W-IX peers</a></li>
+        {% else %}
+            <li><a href="/{{ service }}/summary/">Full View peers</a></li>
+        {% endif %}
+        <li class="active">Routes</li>
+        <li class="active">{{ destination }}</li>
+    </ol>
+
     <div class="row">
         <div class="col-md-12">
             <h3>Routes for {{ destination }}</h3>
