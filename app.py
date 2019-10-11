@@ -2,15 +2,10 @@ import ipaddress
 import re
 
 from flask import Flask, render_template, request, redirect
-
+import config
 from models import RouteServer
 
 app = Flask(__name__)
-
-servers = {
-    'rs1': 'hostel.ihome.ru',
-    'rs2': 'novosib-srv0.ihome.ru'
-}
 
 
 def peer_id_is_valid(peer_id):
@@ -32,8 +27,8 @@ def summary(service):
 
     family = get_family(request)
 
-    rs1 = RouteServer(server=servers['rs1'], service=service, ip_version=family)
-    rs2 = RouteServer(server=servers['rs2'], service=service, ip_version=family)
+    rs1 = RouteServer(server=config.SERVERS['rs1'], service=service, ip_version=family)
+    rs2 = RouteServer(server=config.SERVERS['rs2'], service=service, ip_version=family)
 
     rs1_peers = rs1.peers()
     rs2_peers = rs2.peers()
@@ -57,8 +52,8 @@ def peer(service, peer_id):
 
     family = get_family(request)
 
-    rs1 = RouteServer(server=servers['rs1'], service=service, ip_version=family)
-    rs2 = RouteServer(server=servers['rs2'], service=service, ip_version=family)
+    rs1 = RouteServer(server=config.SERVERS['rs1'], service=service, ip_version=family)
+    rs2 = RouteServer(server=config.SERVERS['rs2'], service=service, ip_version=family)
 
     rs1_peer = rs1.peer(peer_id)
     rs2_peer = rs2.peer(peer_id)
@@ -86,8 +81,8 @@ def peer_prefixes(service, peer_id):
 
     family = get_family(request)
 
-    rs1 = RouteServer(servers['rs1'], service, family)
-    rs2 = RouteServer(servers['rs2'], service, family)
+    rs1 = RouteServer(config.SERVERS['rs1'], service, family)
+    rs2 = RouteServer(config.SERVERS['rs2'], service, family)
 
     rs1_peer = rs1.peer(peer_id)
     rs2_peer = rs2.peer(peer_id)
@@ -121,8 +116,8 @@ def peer_prefixes_rejected(service, peer_id):
 
     family = get_family(request)
 
-    rs1 = RouteServer(servers['rs1'], service, family)
-    rs2 = RouteServer(servers['rs2'], service, family)
+    rs1 = RouteServer(config.SERVERS['rs1'], service, family)
+    rs2 = RouteServer(config.SERVERS['rs2'], service, family)
 
     rs1_peer = rs1.peer(peer_id)
     rs2_peer = rs2.peer(peer_id)
@@ -170,9 +165,8 @@ def route(service):
         else:
             address = given_prefix
 
-        # TODO: Validate prefix!
-        rs1 = RouteServer(servers['rs1'], service, family)
-        rs2 = RouteServer(servers['rs2'], service, family)
+        rs1 = RouteServer(config.SERVERS['rs1'], service, family)
+        rs2 = RouteServer(config.SERVERS['rs2'], service, family)
 
         rs1_route = rs1.route(prefix=prefix, address=address)
         rs2_route = rs2.route(prefix=prefix, address=address)

@@ -2,6 +2,7 @@ import re
 import paramiko
 from datetime import datetime
 from ipaddress import IPv4Address, IPv6Address
+import config
 
 
 class ParsingError(Exception):
@@ -26,7 +27,7 @@ class RouteServer:
     def connect(self):
         session = paramiko.SSHClient()
         session.load_system_host_keys()
-        session.connect(self.server, username='vlad')
+        session.connect(self.server, username=config.SSH_USERNAME, password=config.SSH_PASSWORD)
         self._session = session
 
     def _disconnect(self):
@@ -109,7 +110,7 @@ class RouteServer:
         for peer_dump in protocols_dump:
             try:
                 peer = Peer(peer_dump, self.ip_version)
-            except ParsingError as e:
+            except ParsingError:
                 continue
             else:
                 peers.append(peer)
@@ -273,6 +274,7 @@ class Peer:
     value = None
 
     def __init__(self, dump, ip_version):
+
         if ip_version not in [4, 6]:
             raise ValueError('No IP version given')
         self.fill_data(dump, ip_version)
