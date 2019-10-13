@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% block title %}Routes from {{ peer_id }}{% endblock %}
 
 {% block content %}
 
@@ -15,10 +16,6 @@
 
         .asterisk {
             width: 30px;
-        }
-
-        .prefix {
-            width: 120px;
         }
 
         .preferred-heading {
@@ -94,7 +91,12 @@
                                 {% endif %}
                             {% endif %}
                             {% with routes = rs1_routes %}
-                                {% include 'peer_route_table.html' %}
+                                <table class="table table-condensed">
+                                    {% for route in routes %}
+                                        {% include 'route.html' %}
+                                    {% endfor %}
+                                </table>
+
                             {% endwith %}
 
                         {% else %}
@@ -123,7 +125,11 @@
                                 {% endif %}
                             {% endif %}
                             {% with routes = rs2_routes %}
-                                {% include 'peer_route_table.html' %}
+                                <table class="table table-condensed">
+                                    {% for route in routes %}
+                                        {% include 'route.html' %}
+                                    {% endfor %}
+                                </table>
                             {% endwith %}
 
                         {% else %}

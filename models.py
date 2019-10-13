@@ -95,7 +95,7 @@ class RouteServer:
         route = Route(dump=bird_dump, routes=prefixes)
         for prefix_dump in self._parse__show_route_peer(bird_dump):
             prefix = Prefix(prefix_dump, self.ip_version)
-            prefix.destination = route.prefix
+            prefix.prefix = route.prefix  # we can't parse it from the dump because of 'via'
             prefixes.append(prefix)
         return route
 
@@ -171,7 +171,6 @@ class Prefix:
         self._dump = dump
         self._parse_dump()
         self.filtered = False
-        self.destination = None
 
     def _parse_dump(self):
         """
@@ -181,9 +180,7 @@ class Prefix:
         self.origin = self._extract_word('BGP.origin', 1)
         self.next_hop = self._extract_word('BGP.next_hop', 1)
         self.local_pref = self._extract_word('BGP.local_pref', 1)
-        for c in self._parse_communities():
-            self.communities.append(c)
-        self.communities = sorted(self.communities)
+        self.communities = self._parse_communities()
         self.as_path = self._parse_as_path()
         self.preferred = self._parse_preferred()
 
@@ -194,16 +191,18 @@ class Prefix:
         return False
 
     def _parse_communities(self):
-        communities = []
+        community_values = []
         pattern = re.compile('(\(\d{1,8}\,\d{1,8}\))')
         for l in self._dump:
             if 'BGP.community' in l:
                 groups = pattern.findall(l)
                 for g in groups:
-                    community = g.replace('(', '')
-                    community = community.replace(')', '')
-                    # community = community.replace(',', ':')
-                    communities.append(community)
+                    community_value = g.replace('(', '')
+                    community_value = community_value.replace(')', '')
+                    community_values.append(community_value)
+
+        communities = [Community(x) for x in community_values]
+        communities = sorted(communities, key=lambda x: x.asn, reverse=True)
         return communities
 
     def _parse_as_path(self):
@@ -381,33 +380,6 @@ class Peer:
                 return [int(x) for x in groups]
         return 0, 0, 0, 0
 
-    # def _parse_filtered_routes(self):
-    #     filtered_pattern = re.compile("[0-9]{1,10} filtered")
-    #     for l in self._dump:
-    #         result = filtered_pattern.search(l)
-    #         if result:
-    #             parts = result.group().split()
-    #             return parts[0]
-    #     return 0
-
-    # def _parse_exported_routes(self):
-    #     filtered_pattern = re.compile("[0-9]{1,10} exported")
-    #     for l in self._dump:
-    #         result = filtered_pattern.search(l)
-    #         if result:
-    #             parts = result.group().split()
-    #             return parts[0]
-    #     return 0
-
-    # def _parse_preferred_routes(self):
-    #     filtered_pattern = re.compile("[0-9]{1,10} preferred")
-    #     for l in self._dump:
-    #         result = filtered_pattern.search(l)
-    #         if result:
-    #             parts = result.group().split()
-    #             return parts[0]
-    #     return 0
-
     def _parse_neighbor_address(self):
         return self._extract_word("Neighbor address", 2)
 
@@ -457,3 +429,62 @@ class Route:
             if groups:
                 self.prefix = groups[0]
         self.routes = routes
+
+
+class Community:
+
+    def __init__(self, data):
+        self.asn = None
+        self.value = None
+        self.description = ''
+
+        parts = data.split(',')
+
+        if not len(parts) == 2:
+            raise ValueError('Wrong community data given: %s' % data)
+
+        if not all([parts[0].isdecimal(), parts[1].isdecimal()]):
+            raise ValueError('Wrong community data given: %s' % data)
+
+        try:
+            self.asn = int(parts[0])
+            self.value = int(parts[1])
+        except (TypeError, ValueError):
+            raise ValueError('Wrong community data given: %s' % data)
+
+        self.parse_description()
+
+    def parse_description(self):
+
+        if self.asn in config.LOCAL_AS:
+
+            if self.value in config.CITY_COMMUNITIES:
+                self.description = 'Received in %s' % config.CITY_COMMUNITIES.get(self.value)
+            elif self.value in config.SERVICE_COMMUNITIES:
+                self.description = config.SERVICE_COMMUNITIES.get(self.value)
+
+        elif self.asn == 0:
+
+            if self.value in config.CITY_COMMUNITIES:
+                self.description = 'No advertise to %s' % config.CITY_COMMUNITIES.get(self.value)
+
+            elif self.value in config.PEERING_COMMUNITIES:
+                self.description = 'No advertise to %s' % config.PEERING_COMMUNITIES.get(self.value)
+
+            else:
+                self.description = 'No advertise to as%s' % self.value
+
+        elif self.asn in config.PREPEND_COMMUNITIES:
+            self.description = config.PREPEND_COMMUNITIES.get(self.asn)
+
+            if self.value in config.CITY_COMMUNITIES:
+                self.description += ' to %s' % config.CITY_COMMUNITIES.get(self.value)
+
+            elif self.value in config.PEERING_COMMUNITIES:
+                self.description += ' to %s' % config.PEERING_COMMUNITIES.get(self.value)
+
+            else:
+                self.description += ' to as%s' % self.value
+
+    def __str__(self):
+        return '%s,%s' % (self.asn, self.value)

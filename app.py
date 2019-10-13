@@ -58,7 +58,7 @@ def peer(service, peer_id):
     rs1_peer = rs1.peer(peer_id)
     rs2_peer = rs2.peer(peer_id)
 
-    return render_template('peer.html',
+    return render_template('peer_page.html',
                            service=service,
                            family=family,
                            peer_id=peer_id,
@@ -90,7 +90,7 @@ def peer_prefixes(service, peer_id):
     rs1_routes = rs1.prefixes(peer_id, filtered)
     rs2_routes = rs2.prefixes(peer_id, filtered)
 
-    return render_template('peer_routes.html',
+    return render_template('peer_routes_page.html',
                            service=service,
                            family=family,
                            peer_id=peer_id,
@@ -125,7 +125,7 @@ def peer_prefixes_rejected(service, peer_id):
     rs1_routes = rs1.prefixes(peer_id, rejected_mode)
     rs2_routes = rs2.prefixes(peer_id, rejected_mode)
 
-    return render_template('peer_routes.html',
+    return render_template('peer_routes_page.html',
                            service=service,
                            family=family,
                            peer_id=peer_id,
@@ -171,7 +171,7 @@ def route(service):
         rs1_route = rs1.route(prefix=prefix, address=address)
         rs2_route = rs2.route(prefix=prefix, address=address)
 
-    return render_template('route.html',
+    return render_template('route_page.html',
                            service=service,
                            family=family,
                            destination=given_prefix,

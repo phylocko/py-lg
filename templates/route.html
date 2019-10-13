@@ -1,86 +1,60 @@
-{% extends 'base.html' %}
+<tr class="{% if route.preferred %}preferred preferred-heading{% else %}non-preferred non-preferred-heading{% endif %}">
 
-{% block content %}
-
-
-<style>
-    .asterisk {
-        width: 30px;
-    }
-    .preferred-heading {
-        background-color: #F0FFF1;
-    }
-    .non-preferred-heading {
-        background-color: #FFFDE3;
-    }
-    .filtered {
-        background-color: #F0EFEE;
-        color: #999999;
-    }
-</style>
-
-{% if error %}
-<div class="container text-center">
-    <b>{{ error }}</b>
-</div>
-
-{% else %}
-
-<div class="container-fluid">
-
-    <ol class="breadcrumb">
-        {% if service == "wix" %}
-            <li><a href="/{{ service }}/summary/">W-IX peers</a></li>
+    <td class="asterisk">
+        {% if route.preferred %}
+            <span class="glyphicon glyphicon-menu-right" aria-hidden="true"></span>
         {% else %}
-            <li><a href="/{{ service }}/summary/">Full View peers</a></li>
+            &nbsp;
         {% endif %}
-        <li class="active">Routes</li>
-        <li class="active">{{ destination }}</li>
-    </ol>
+    </td>
 
-    <div class="row">
-        <div class="col-md-12">
-            <h3>Routes for {{ destination }}</h3>
+    <td><b><a href="/{{ service }}/route/?destination={{ route.prefix }}">{{ route.prefix }}</a></b></td>
+
+    <td colspan="2">
+        Next-hop: <b>{{ route.next_hop }}</b>
+        <span class="pull-right">
+            Origin: <b>{{ route.origin }}</b>
+            Localpref: <b>{{ route.local_pref }}</b>
+        </span>
+
+    </td>
+
+</tr>
+
+<tr class="{% if route.preferred %}preferred{% else %}non-preferred{% endif %}">
+    <td colspan="2"></td>
+    <td colspan="2">
+            Origin: <b>{{ route.origin }}</b> Localpref: <b>{{ route.local_pref }}</b>
+    </td>
+</tr>
+
+<tr class="{% if route.preferred %}preferred{% else %}non-preferred{% endif %}">
+    <td></td>
+    <td class="text-right">AS-Path</td>
+    <td colspan="2">
+        {% for asn in route.as_path %}
+            <b>{{ asn }}</b>
+        {% endfor %}
+    </td>
+</tr>
+
+<tr class="{% if route.preferred %}preferred{% else %}non-preferred{% endif %}">
+    <td></td>
+    <td class="text-right">Community</td>
+
+    <td colspan="2">
+        <div class="long_communities">
+            <small>
+                <ul class="list-unstyled">
+                    {% for community in route.communities if community.description %}
+                        <li><b>{{ community }}</b> — <span class="text-muted">{{ community.description }}</span></li>
+                    {% endfor %}
+                </ul>
+
+                {% for community in route.communities if not community.description %}
+                    <label class="label label-default">{{ community }}</label>
+                {% endfor %}
+            </small>
         </div>
-    </div>
-
-    {% if rs1_route.routes|length > 3 or rs2_route.routes|length > 3 %}
-        {% include 'routes_display_radio.html' %}
-    {% endif %}
-
-    <div class="row">
-
-        <div class="col-md-6">
-            <h4>Routes on RS1</h4>
-
-            {% with routes = rs1_route.routes %}
-                {% if routes %}
-                {% include 'routes_table.html' %}
-                {% else %}
-                <div class="alert alert-info" role="alert">{{ destination }} not in table</div>
-                {% endif %}
-            {% endwith %}
-
-
-        </div>
-
-        <div class="col-md-6">
-            <h4>Routes on RS2</h4>
-
-            {% with routes = rs2_route.routes %}
-                {% if routes %}
-                {% include 'routes_table.html' %}
-                {% else %}
-                <div class="alert alert-info" role="alert">{{ destination }} not in table</div>
-                {% endif %}
-            {% endwith %}
-
-        </div>
-
-    </div>
-
-</div>
-
-{% endif %}
-
-{% endblock %}
+    </td>
+</tr>
