@@ -51,7 +51,7 @@
             </ol>
 
             <div class="row">
-                <div class="col-md-6">
+                <div class="col-sm-8">
                     {% if rejected_mode %}
                         <a class="btn btn-success" href="/{{ service }}/peer/{{ peer_id }}/routes/?family={{ family }}">Show accepted routes</a>
                     {% else %}
@@ -63,7 +63,7 @@
                     {% endif %}
                 </div>
 
-                <div class="col-md-6 text-right">
+                <div class="col-sm-4 text-right hidden-xs">
                     {% if not rejected_mode %}
                         <a class="btn btn-warning" href="/{{ service }}/peer/{{ peer_id }}/routes/rejected/?family={{ family }}">Show rejected routes</a>
                     {% endif %}

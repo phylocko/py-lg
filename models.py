@@ -466,13 +466,13 @@ class Community:
         elif self.asn == 0:
 
             if self.value in config.CITY_COMMUNITIES:
-                self.description = 'No advertise to %s' % config.CITY_COMMUNITIES.get(self.value)
+                self.description = 'Do not advertise to %s' % config.CITY_COMMUNITIES.get(self.value)
 
             elif self.value in config.PEERING_COMMUNITIES:
-                self.description = 'No advertise to %s' % config.PEERING_COMMUNITIES.get(self.value)
+                self.description = 'Do not advertise to %s' % config.PEERING_COMMUNITIES.get(self.value)
 
             else:
-                self.description = 'No advertise to as%s' % self.value
+                self.description = 'Do not advertise to as%s' % self.value
 
         elif self.asn in config.PREPEND_COMMUNITIES:
             self.description = config.PREPEND_COMMUNITIES.get(self.asn)

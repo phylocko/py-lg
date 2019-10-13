@@ -47,10 +47,9 @@
             <small>
                 <ul class="list-unstyled">
                     {% for community in route.communities if community.description %}
-                        <li><b>{{ community }}</b> — <span class="text-muted">{{ community.description }}</span></li>
+                        <li><b>{{ community }}</b> <span class="text-muted hidden-xs">— {{ community.description }}</span></li>
                     {% endfor %}
                 </ul>
-
                 {% for community in route.communities if not community.description %}
                     <label class="label label-default">{{ community }}</label>
                 {% endfor %}
