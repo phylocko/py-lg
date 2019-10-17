@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-
+{% block title %}{% if service == 'fv' %}Fill View peers{% elif service == 'wix' %}W-IX peers{% endif %}{% endblock %}
 {% block content %}
 
     {% if not pairs %}
