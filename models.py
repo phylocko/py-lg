@@ -1,9 +1,14 @@
+import pickle
 import re
-import paramiko
 from datetime import datetime
 from ipaddress import IPv4Address, IPv6Address
+from socket import gaierror
+from time import sleep
+
+import paramiko
+from paramiko.ssh_exception import SSHException
+
 import config
-import pickle
 
 
 class ParsingError(Exception):
@@ -11,18 +16,9 @@ class ParsingError(Exception):
 
 
 class RouteServer:
-    def __init__(self, server=None, service=None, ip_version=None):
-        if ip_version not in [4, 6]:
-            raise ValueError('Wrong IP version given')
-
+    def __init__(self, server=None):
         self._session = None
-        self.server = None
-        self.service = None
-        self.ip_version = None
-
         self.server = server
-        self.service = service
-        self.ip_version = ip_version or 4
 
         self.next_hop_cache = self.load_next_hop_cache()
         self.connect()
@@ -43,19 +39,31 @@ class RouteServer:
         self.save_next_hop_cache(cache)
 
     def connect(self):
+        print('%s ssh' % self.server)
         session = paramiko.SSHClient()
         session.load_system_host_keys()
-        session.connect(self.server, username=config.SSH_USERNAME, password=config.SSH_PASSWORD)
-        self._session = session
+        try:
+            session.connect(self.server, username=config.SSH_USERNAME, password=config.SSH_PASSWORD)
+        except gaierror as e:
+            print('%s gaiaerror, reconnecting in 3 sec...' % self.server)
+            sleep(3)
+            self.connect()
+        else:
+            self._session = session
 
     def _disconnect(self):
         self._session.close()
 
     def _cmd(self, command):
-        stdin, stdout, stderr = self._session.exec_command(command)
-
-        bird_dump_bytes = stdout.read()
-        return bird_dump_bytes.decode("utf-8")
+        try:
+            stdin, stdout, stderr = self._session.exec_command(command, timeout=5)
+        except (TimeoutError, SSHException):
+            print('Timeout, reconnecting...')
+            self.connect()
+            self._cmd(command)
+        else:
+            bird_dump_bytes = stdout.read()
+            return bird_dump_bytes.decode("utf-8")
 
     def _parse__show_protocols(self, bird_dump):
         peers_lines = []
@@ -96,62 +104,60 @@ class RouteServer:
 
         return routes
 
-    def route(self, prefix=None, address=None):
-        if prefix or address:
-            if prefix:
-                bird_command = "show route %s all" % prefix
-            else:
-                bird_command = "show route for %s all" % address
+    def route(self, destination=None, service=None, ip_version=None):
+        if '/' in destination:
+            bird_command = "show route %s all" % destination
         else:
-            return []
+            bird_command = "show route for %s all" % destination
 
         server_command = "echo '%s' | sudo birdc -s /var/run/bird%s.%s.ctl" % (
-            bird_command, self.ip_version, self.service)
+            bird_command, ip_version, service)
         bird_dump = self._cmd(server_command)
 
         prefixes = []
 
         route = Route(dump=bird_dump, routes=prefixes)
         for prefix_dump in self._parse__show_route_peer(bird_dump):
-            prefix = Prefix(prefix_dump, self.ip_version)
+            prefix = Prefix(prefix_dump, ip_version)
             prefix.prefix = route.prefix  # we can't parse it from the dump because of 'via'
-            next_hop_netname = self.next_hop_cache.get(self.service, {}).get(self.ip_version, {}).get(prefix.next_hop)
+            next_hop_netname = self.next_hop_cache.get(service, {}).get(ip_version, {}).get(prefix.next_hop)
             prefix.next_hop_netname = next_hop_netname
             prefixes.append(prefix)
         return route
 
-    def peers(self):
+    def peers(self, service='wix', ip_version=4):
         bird_command = "show protocols all"
         server_command = "echo '%s' | sudo birdc -s /var/run/bird%s.%s.ctl" % (
-            bird_command, self.ip_version, self.service)
+            bird_command, ip_version, service)
         bird_dump = self._cmd(server_command)
 
         peers = []
         protocols_dump = self._parse__show_protocols(bird_dump)
         for peer_dump in protocols_dump:
             try:
-                peer = Peer(peer_dump, self.ip_version)
+                peer = Peer(peer_dump, ip_version)
             except ParsingError:
                 continue
             else:
                 peers.append(peer)
 
         next_hop_map = {x.neighbor_address: x.description for x in peers}
-        self.update_next_hop_cache(next_hop_map, self.service, self.ip_version)
+        if next_hop_map:
+            self.update_next_hop_cache(next_hop_map, service, ip_version)
         return peers
 
-    def peer(self, peer_id):
+    def peer(self, peer_id, service=None, ip_version=4):
         bird_command = "show protocols all %s" % peer_id
         server_command = "echo '%s' | sudo birdc -s /var/run/bird%s.%s.ctl" % (
-            bird_command, self.ip_version, self.service)
+            bird_command, ip_version, service)
         bird_dump = self._cmd(server_command)
 
         peers = []
         parsed_protocols = self._parse__show_protocols(bird_dump)
         for peer_dump in parsed_protocols:
             try:
-                peer = Peer(peer_dump, self.ip_version)
-            except ParsingError as e:
+                peer = Peer(peer_dump, ip_version)
+            except ParsingError:
                 pass
             else:
                 peers.append(peer)
@@ -160,20 +166,20 @@ class RouteServer:
             return peers[0]
         return None
 
-    def prefixes(self, peer_id, rejected):
+    def prefixes(self, peer_id, rejected, service=None, ip_version=4):
         bird_command = "show route protocol %s all" % peer_id
         if rejected:
             bird_command = "show route protocol %s filtered all" % peer_id
 
         server_command = "echo '%s' | sudo birdc -s /var/run/bird%s.%s.ctl | head -3000" % (bird_command,
-                                                                                            self.ip_version,
-                                                                                            self.service)
+                                                                                            ip_version,
+                                                                                            service)
         bird_dump = self._cmd(server_command)
 
         prefixes = []
         for prefix_dump in self._parse__show_route_peer(bird_dump):
             if len(prefixes) < 301:
-                prefix = Prefix(prefix_dump, self.ip_version)
+                prefix = Prefix(prefix_dump, ip_version)
                 if rejected:
                     prefix.filtered = True
                 prefixes.append(prefix)

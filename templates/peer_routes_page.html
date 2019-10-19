@@ -65,7 +65,7 @@
 
                 <div class="col-sm-4 text-right hidden-xs">
                     {% if not rejected_mode %}
-                        <a class="btn btn-warning" href="/{{ service }}/peer/{{ peer_id }}/routes/rejected/?family={{ family }}">Show rejected routes</a>
+                        <a class="btn btn-warning" href="/{{ service }}/peer/{{ peer_id }}/routes/?family={{ family }}&rejected=yes">Show rejected routes</a>
                     {% endif %}
                 </div>
 
@@ -80,17 +80,22 @@
                         <h3>&nbsp;{% if rejected_mode %}Rejected{% else %}Accepted{% endif %} routes</h3>
 
                         {% if peer.state == 'up' %}
-                            {% if not rejected_mode %}
-                                {% if peer.imported_routes > 300 %}
-                                    <div class="alert alert-warning" role="alert">Displaying first 300 of {{ peer.imported_routes }} accepted routes</div>
-                                {% endif %}
-                            {% endif %}
-                            {% if rejected_mode %}
-                                {% if peer.filtered_routes > 300 %}
-                                    <div class="alert alert-warning" role="alert">Displaying first 300 of {{ peer.filtered_routes }} rejected routes</div>
-                                {% endif %}
-                            {% endif %}
+
                             {% with routes = rs1_routes %}
+                                {% if rejected_mode %}
+                                    {% if peer.imported_routes > 300 %}
+                                        <div class="alert alert-warning" role="alert">
+                                            Displaying first 300 of
+
+                                            {% if rejected_mode %}{{ peer.filtered_routes }}{% else %}{{ peer.imported_routes }}{% endif %}
+
+                                            {% if rejected_mode %}rejected{% else %}accepted{% endif %}
+                                            routes
+
+                                        </div>
+                                    {% endif %}
+                                {% endif %}
+
                                 <table class="table table-condensed">
                                     {% for route in routes %}
                                         {% include 'route.html' %}
@@ -114,22 +119,28 @@
                         <h3>&nbsp;{% if rejected_mode %}Rejected{% else %}Accepted{% endif %} routes</h3>
 
                         {% if peer.state == 'up' %}
-                            {% if not rejected_mode %}
-                                {% if peer.imported_routes > 300 %}
-                                    <div class="alert alert-warning" role="alert">Displaying first 300 of {{ peer.imported_routes }} accepted routes</div>
+
+                            {% with routes = rs1_routes %}
+                                {% if rejected_mode %}
+                                    {% if peer.imported_routes > 300 %}
+                                        <div class="alert alert-warning" role="alert">
+                                            Displaying first 300 of
+
+                                            {% if rejected_mode %}{{ peer.filtered_routes }}{% else %}{{ peer.imported_routes }}{% endif %}
+
+                                            {% if rejected_mode %}rejected{% else %}accepted{% endif %}
+                                            routes
+
+                                        </div>
+                                    {% endif %}
                                 {% endif %}
-                            {% endif %}
-                            {% if rejected_mode %}
-                                {% if peer.filtered_routes > 300 %}
-                                    <div class="alert alert-warning" role="alert">Displaying first 300 of {{ peer.filtered_routes }} rejected routes</div>
-                                {% endif %}
-                            {% endif %}
-                            {% with routes = rs2_routes %}
+
                                 <table class="table table-condensed">
                                     {% for route in routes %}
                                         {% include 'route.html' %}
                                     {% endfor %}
                                 </table>
+
                             {% endwith %}
 
                         {% else %}

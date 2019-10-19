@@ -68,8 +68,8 @@
                         </td>
 
                         <td class="text-muted text-right">
-                            <a href="/{{ service }}/peer/{{ pair['rs1'].peer_id }}/routes/rejected/?family={{ family }}">{{ pair['rs1'].filtered_routes }}</a><br>
-                            <a href="/{{ service }}/peer/{{ pair['rs2'].peer_id }}/routes/rejected/?family={{ family }}">{{ pair['rs2'].filtered_routes }}</a>
+                            <a href="/{{ service }}/peer/{{ pair['rs1'].peer_id }}/routes/?family={{ family }}&rejected=yes">{{ pair['rs1'].filtered_routes }}</a><br>
+                            <a href="/{{ service }}/peer/{{ pair['rs2'].peer_id }}/routes/?family={{ family }}&rejected=yes">{{ pair['rs2'].filtered_routes }}</a>
                         </td>
 
                         <td class="text-muted">

@@ -1,12 +1,17 @@
 import ipaddress
+import pickle
 import re
+from threading import Thread
 
 from flask import Flask, render_template, request, redirect
+
 import config
 from models import RouteServer
-import pickle
 
 app = Flask(__name__)
+
+rs1 = RouteServer(server=config.SERVERS['rs1'])
+rs2 = RouteServer(server=config.SERVERS['rs2'])
 
 try:
     f = open('next_hop_map.pickle', 'rb')
@@ -16,6 +21,27 @@ except FileNotFoundError:
     f.close()
 else:
     f.close()
+
+
+class GetParallel:
+    results = [None, None]
+
+    def __init__(self, rs1_func=None, rs2_func=None, func_args=None, func_kwargs=None):
+        self.functions = [rs1_func, rs2_func]
+        self.func_args = func_args or []
+        self.func_kwargs = func_kwargs or {}
+
+        task1 = Thread(target=self.exec, args=[0])
+        task2 = Thread(target=self.exec, args=[1])
+        task1.start()
+        task2.start()
+        task1.join()
+        task2.join()
+
+    def exec(self, index):
+        func = self.functions[index]
+        result = func(*self.func_args, **self.func_kwargs)
+        self.results[index] = result
 
 
 def peer_id_is_valid(peer_id):
@@ -31,24 +57,22 @@ def index():
 
 
 @app.route('/<service>/summary/')
-def summary(service):
+def peers(service):
     if service not in ['fv', 'wix']:
         return render_template('error.html', error='Wrong service'), 404
 
-    family = get_family(request)
+    ip_version = get_family(request)
 
-    rs1 = RouteServer(server=config.SERVERS['rs1'], service=service, ip_version=family)
-    rs2 = RouteServer(server=config.SERVERS['rs2'], service=service, ip_version=family)
+    parallel = GetParallel(rs1_func=rs1.peers,
+                           rs2_func=rs2.peers,
+                           func_kwargs={'service': service, 'ip_version': ip_version})
 
-    rs1_peers = rs1.peers()
-    rs2_peers = rs2.peers()
-
-    pairs = peers_pairs(rs1_peers, rs2_peers)
+    pairs = peers_pairs(parallel.results[0], parallel.results[1])
 
     return render_template('summary.html',
                            pairs=pairs,
                            service=service,
-                           family=family,
+                           family=ip_version,
                            page='summary')
 
 
@@ -60,17 +84,18 @@ def peer(service, peer_id):
     if not peer_id_is_valid(peer_id):
         return render_template('error.html', error='Invalid peer format'), 404
 
-    family = get_family(request)
+    ip_version = get_family(request)
 
-    rs1 = RouteServer(server=config.SERVERS['rs1'], service=service, ip_version=family)
-    rs2 = RouteServer(server=config.SERVERS['rs2'], service=service, ip_version=family)
+    parallel = GetParallel(rs1_func=rs1.peer,
+                           rs2_func=rs2.peer,
+                           func_args=[peer_id],
+                           func_kwargs={'service': service, 'ip_version': ip_version})
 
-    rs1_peer = rs1.peer(peer_id)
-    rs2_peer = rs2.peer(peer_id)
+    rs1_peer, rs2_peer = parallel.results[0], parallel.results[1]
 
     return render_template('peer_page.html',
                            service=service,
-                           family=family,
+                           family=ip_version,
                            peer_id=peer_id,
                            rs1=rs1,
                            rs2=rs2,
@@ -87,57 +112,26 @@ def peer_prefixes(service, peer_id):
     if not peer_id_is_valid(peer_id):
         return render_template('error.html', error='Invalid peer format'), 404
 
-    filtered = False
+    rejected_mode = request.args.get('rejected', False)
+    if rejected_mode:
+        rejected_mode = True
 
-    family = get_family(request)
+    ip_version = get_family(request)
+    parallel = GetParallel(rs1_func=rs1.peer,
+                           rs2_func=rs2.peer,
+                           func_args=[peer_id],
+                           func_kwargs={'service': service, 'ip_version': ip_version})
+    rs1_peer, rs2_peer = parallel.results[0], parallel.results[1]
 
-    rs1 = RouteServer(config.SERVERS['rs1'], service, family)
-    rs2 = RouteServer(config.SERVERS['rs2'], service, family)
-
-    rs1_peer = rs1.peer(peer_id)
-    rs2_peer = rs2.peer(peer_id)
-
-    rs1_routes = rs1.prefixes(peer_id, filtered)
-    rs2_routes = rs2.prefixes(peer_id, filtered)
-
-    return render_template('peer_routes_page.html',
-                           service=service,
-                           family=family,
-                           peer_id=peer_id,
-                           rs1=rs1,
-                           rs2=rs2,
-                           rs1_peer=rs1_peer,
-                           rs2_peer=rs2_peer,
-                           rs1_routes=rs1_routes,
-                           rs2_routes=rs2_routes,
-                           filtered=filtered,
-                           peer=peer)
-
-
-@app.route('/<service>/peer/<peer_id>/routes/rejected/')
-def peer_prefixes_rejected(service, peer_id):
-    if not peer_id_is_valid(peer_id):
-        return render_template('error.html', error='Invalid peer format'), 404
-
-    if service not in ['wix', 'fv']:
-        return redirect('/')
-
-    rejected_mode = True
-
-    family = get_family(request)
-
-    rs1 = RouteServer(config.SERVERS['rs1'], service, family)
-    rs2 = RouteServer(config.SERVERS['rs2'], service, family)
-
-    rs1_peer = rs1.peer(peer_id)
-    rs2_peer = rs2.peer(peer_id)
-
-    rs1_routes = rs1.prefixes(peer_id, rejected_mode)
-    rs2_routes = rs2.prefixes(peer_id, rejected_mode)
+    parallel = GetParallel(rs1_func=rs1.prefixes,
+                           rs2_func=rs2.prefixes,
+                           func_args=[peer_id, rejected_mode],
+                           func_kwargs={'service': service, 'ip_version': ip_version})
+    rs1_routes, rs2_routes = parallel.results[0], parallel.results[1]
 
     return render_template('peer_routes_page.html',
                            service=service,
-                           family=family,
+                           family=ip_version,
                            peer_id=peer_id,
                            rs1=rs1,
                            rs2=rs2,
@@ -159,31 +153,20 @@ def route(service):
         return render_template('error.html', error='No prefix given')
 
     try:
-        prefix, family = adopt_prefix(given_prefix)
+        destination, ip_version = adopt_prefix(given_prefix)
     except ValueError as e:
         return render_template('error.html', error=e)
 
-    rs1, rs2 = None, None
-    rs1_route, rs2_route = None, None
-
-    prefix = None
-    address = None
-
-    if given_prefix:
-        if '/' in given_prefix:
-            prefix = given_prefix
-        else:
-            address = given_prefix
-
-        rs1 = RouteServer(config.SERVERS['rs1'], service, family)
-        rs2 = RouteServer(config.SERVERS['rs2'], service, family)
-
-        rs1_route = rs1.route(prefix=prefix, address=address)
-        rs2_route = rs2.route(prefix=prefix, address=address)
+    parallel = GetParallel(rs1_func=rs1.route,
+                           rs2_func=rs2.route,
+                           func_kwargs={'destination': destination,
+                                        'service': service,
+                                        'ip_version': ip_version})
+    rs1_route, rs2_route = parallel.results[0], parallel.results[1]
 
     return render_template('route_page.html',
                            service=service,
-                           family=family,
+                           family=ip_version,
                            destination=given_prefix,
                            search_string=given_prefix,
                            rs1=rs1,
@@ -205,11 +188,11 @@ def search():
         return render_template('error.html', error='Nothing to search', service=service)
 
     try:
-        destination, family = adopt_prefix(search_string)
+        destination, ip_version = adopt_prefix(search_string)
     except ValueError as e:
         return render_template('error.html', error=e, service=service, search_string=search_string)
 
-    return redirect('/%s/route/?destination=%s&family=%s' % (service, destination, family))
+    return redirect('/%s/route/?destination=%s&family=%s' % (service, destination, ip_version))
 
 
 def peers_pairs(rs1_peers, rs2_peers):
