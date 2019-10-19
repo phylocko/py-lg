@@ -3,6 +3,7 @@ import paramiko
 from datetime import datetime
 from ipaddress import IPv4Address, IPv6Address
 import config
+import pickle
 
 
 class ParsingError(Exception):
@@ -22,7 +23,24 @@ class RouteServer:
         self.server = server
         self.service = service
         self.ip_version = ip_version or 4
+
+        self.next_hop_cache = self.load_next_hop_cache()
         self.connect()
+
+    @staticmethod
+    def load_next_hop_cache():
+        with open('next_hop_map.pickle', 'rb') as f:
+            return pickle.load(f)
+
+    @staticmethod
+    def save_next_hop_cache(data):
+        with open('next_hop_map.pickle', 'wb') as f:
+            pickle.dump(data, f)
+
+    def update_next_hop_cache(self, data, service, ip_version):
+        cache = self.load_next_hop_cache()
+        cache[service][ip_version] = data
+        self.save_next_hop_cache(cache)
 
     def connect(self):
         session = paramiko.SSHClient()
@@ -58,7 +76,8 @@ class RouteServer:
 
         return peers_lines
 
-    def _parse__show_route_peer(self, bird_dump):
+    @staticmethod
+    def _parse__show_route_peer(bird_dump):
         routes = []
         route = []
 
@@ -96,6 +115,8 @@ class RouteServer:
         for prefix_dump in self._parse__show_route_peer(bird_dump):
             prefix = Prefix(prefix_dump, self.ip_version)
             prefix.prefix = route.prefix  # we can't parse it from the dump because of 'via'
+            next_hop_netname = self.next_hop_cache.get(self.service, {}).get(self.ip_version, {}).get(prefix.next_hop)
+            prefix.next_hop_netname = next_hop_netname
             prefixes.append(prefix)
         return route
 
@@ -114,6 +135,9 @@ class RouteServer:
                 continue
             else:
                 peers.append(peer)
+
+        next_hop_map = {x.neighbor_address: x.description for x in peers}
+        self.update_next_hop_cache(next_hop_map, self.service, self.ip_version)
         return peers
 
     def peer(self, peer_id):
@@ -160,6 +184,7 @@ class Prefix:
     def __init__(self, dump, ip_version):
         self.prefix = None
         self.next_hop = None
+        self.next_hop_netname = None
         self.via = None
         self.local_pref = None
         self.as_path = []

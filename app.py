@@ -4,8 +4,18 @@ import re
 from flask import Flask, render_template, request, redirect
 import config
 from models import RouteServer
+import pickle
 
 app = Flask(__name__)
+
+try:
+    f = open('next_hop_map.pickle', 'rb')
+except FileNotFoundError:
+    f = open('next_hop_map.pickle', 'wb')
+    pickle.dump({'wix': {4: {}, 6: {}}, 'fv': {4: {}, 6: {}}}, f)
+    f.close()
+else:
+    f.close()
 
 
 def peer_id_is_valid(peer_id):
