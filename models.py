@@ -42,14 +42,8 @@ class RouteServer:
         print('%s ssh' % self.server)
         session = paramiko.SSHClient()
         session.load_system_host_keys()
-        try:
-            session.connect(self.server, username=config.SSH_USERNAME, password=config.SSH_PASSWORD)
-        except gaierror as e:
-            print('%s gaiaerror, reconnecting in 3 sec...' % self.server)
-            sleep(3)
-            self.connect()
-        else:
-            self._session = session
+        session.connect(self.server, username=config.SSH_USERNAME, password=config.SSH_PASSWORD)
+        self._session = session
 
     def _disconnect(self):
         self._session.close()
