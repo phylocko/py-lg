@@ -4,6 +4,7 @@ import re
 from threading import Thread
 
 from flask import Flask, render_template, request, redirect
+from datetime import datetime, timedelta
 
 import config
 from models import RouteServer
@@ -68,6 +69,47 @@ def peers(service):
                            func_kwargs={'service': service, 'ip_version': ip_version})
 
     pairs = peers_pairs(parallel.results[0], parallel.results[1])
+
+    # filters and modifiers
+
+    interval = None
+    given_interval = request.args.get('interval', '')
+    if given_interval.isdigit():
+        interval = int(given_interval)
+
+    if interval:
+        filtered_pairs = []
+        now = datetime.now()
+        delta = timedelta(minutes=interval)
+        for pair in pairs:
+            rs1_data = pair.get('rs1')
+            rs2_data = pair.get('rs2')
+            rs1_last_time = datetime.strptime(rs1_data.last_event_time, '%Y-%m-%d %H:%M:%S')
+            rs2_last_time = datetime.strptime(rs2_data.last_event_time, '%Y-%m-%d %H:%M:%S')
+            if now - rs1_last_time < delta:
+                filtered_pairs.append(pair)
+                continue
+            if now - rs2_last_time < delta:
+                filtered_pairs.append(pair)
+                continue
+        pairs = filtered_pairs
+
+    status = None
+    given_status = request.args.get('status', '')
+    if given_status in ['up', 'down']:
+        status = given_status
+    if status:
+        filtered_pairs = []
+        for pair in pairs:
+            rs1_data = pair.get('rs1')
+            rs2_data = pair.get('rs2')
+            if rs1_data.state == status:
+                filtered_pairs.append(pair)
+                continue
+            if rs2_data.state == status:
+                filtered_pairs.append(pair)
+                continue
+        pairs = filtered_pairs
 
     return render_template('summary.html',
                            pairs=pairs,
