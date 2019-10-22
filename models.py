@@ -487,6 +487,8 @@ class Community:
                 self.description = 'Received in %s' % config.CITY_COMMUNITIES.get(self.value)
             elif self.value in config.SERVICE_COMMUNITIES:
                 self.description = config.SERVICE_COMMUNITIES.get(self.value)
+            elif self.value in config.PEERING_COMMUNITIES:
+                self.description = config.PEERING_COMMUNITIES.get(self.value)
 
         elif self.asn == 0:
 
