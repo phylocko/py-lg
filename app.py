@@ -70,8 +70,16 @@ def peers(service):
 
     pairs = peers_pairs(parallel.results[0], parallel.results[1])
 
-    # filters and modifiers
+    # filter neighbors with hidden as
+    if config.HIDDEN_PEER_AS:
+        filtered_pairs = []
+        for pair in pairs:
+            if pair['neighbor_as'] in config.HIDDEN_PEER_AS:
+                continue
+            filtered_pairs.append(pair)
+        pairs = filtered_pairs
 
+    # filter by interval arg
     interval = None
     given_interval = request.args.get('interval', '')
     if given_interval.isdigit():
@@ -94,6 +102,7 @@ def peers(service):
                 continue
         pairs = filtered_pairs
 
+    # filter by status arg
     status = None
     given_status = request.args.get('status', '')
     if given_status in ['up', 'down']:

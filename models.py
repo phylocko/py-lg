@@ -409,7 +409,11 @@ class Peer:
         return self._extract_word("Neighbor address", 2)
 
     def _parse_neighbor_as(self):
-        return self._extract_word("Neighbor AS", 2)
+        neighbor_as = self._extract_word("Neighbor AS", 2)
+        if neighbor_as:
+            return int(neighbor_as)
+        else:
+            return None
 
     def _parse_source_address(self):
         return self._extract_word("Source address", 2)
