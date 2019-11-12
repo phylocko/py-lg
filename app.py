@@ -1,13 +1,17 @@
 import ipaddress
 import pickle
 import re
+from datetime import datetime, timedelta
 from threading import Thread
 
+import sentry_sdk
 from flask import Flask, render_template, request, redirect
-from datetime import datetime, timedelta
 
 import config
 from models import RouteServer
+
+if config.SENTRY_KEY:
+    sentry_sdk.init(config.SENTRY_KEY)
 
 app = Flask(__name__)
 

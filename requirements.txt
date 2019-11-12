@@ -15,3 +15,4 @@ pycparser==2.18
 PyNaCl==1.2.1
 six==1.11.0
 Werkzeug==0.14.1
+sentry-sdk==0.13.2
