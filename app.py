@@ -5,13 +5,14 @@ from datetime import datetime, timedelta
 from threading import Thread
 
 import sentry_sdk
+from sentry_sdk.integrations.flask import FlaskIntegration
 from flask import Flask, render_template, request, redirect
 
 import config
 from models import RouteServer
 
 if config.SENTRY_KEY:
-    sentry_sdk.init(config.SENTRY_KEY)
+    sentry_sdk.init(dsn=config.SENTRY_KEY, integrations=[FlaskIntegration()])
 
 app = Flask(__name__)
 
