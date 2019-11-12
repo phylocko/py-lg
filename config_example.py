@@ -8,6 +8,8 @@ SSH_PASSWORD = '123'
 
 LOCAL_AS = [1234, 5678]
 
+HIDDEN_PEER_AS = [65531]
+
 PEERING_COMMUNITIES = {
     # Work with LOCAL AS in ASN part
     1111: 'Annoying customers',
