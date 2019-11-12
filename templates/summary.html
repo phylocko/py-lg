@@ -75,8 +75,17 @@
 
                         <td class="text-muted">
                             <small>
-                                <abbr title="{{ pair['rs1'].last_event_time }}">{{ pair['rs1'].persistency() }} {{ pair['rs1'].state }}</abbr><br>
-                                <abbr title="{{ pair['rs2'].last_event_time }}">{{ pair['rs2'].persistency() }} {{ pair['rs2'].state }}</abbr>
+                                {% if pair['rs1'] %}
+                                    <abbr title="{{ pair['rs1'].last_event_time }}">{{ pair['rs1'].persistency() }} {{ pair['rs1'].state }}</abbr><br>
+                                {% else %}
+                                    —
+                                {% endif %}
+
+                                {% if pair['rs2'] %}
+                                    <abbr title="{{ pair['rs2'].last_event_time }}">{{ pair['rs2'].persistency() }} {{ pair['rs2'].state }}</abbr>
+                                {% else %}
+                                    —
+                                {% endif %}
                             </small>
                         </td>
                     </tr>
