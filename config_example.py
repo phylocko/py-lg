@@ -33,3 +33,5 @@ PREPEND_COMMUNITIES = {
     65502: 'Prepend 2 times',
     65503: 'Prepend 3 times',
 }
+
+SENTRY_KEY = ''
