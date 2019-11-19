@@ -1,12 +1,13 @@
 # Py-LG
 
-iHome Looking Glass written on Python
+Looking Glass for internet IX with Bird written on Python
 
 ## Getting Started
 
-These instructions will get you a copy of the project up and running on your local machine for development and testing purposes.
+These instructions will get you a copy of the project up and running 
+on your local machine for development and testing purposes.
 
-### Creating a virtual env
+### Create a virtual env
 
 ```
 mkdir -p venv/py-lg
@@ -14,9 +15,7 @@ virtualenv --python=python3 venv/py-lg
 source venv/py-lg/bin/activate
 ```
 
-### Getting the source code
-
-Create project's folder and copy repo data into it:
+### Get the source code
 
 ```
 mkdir py-lg
@@ -29,18 +28,14 @@ git clone git@gitlab.com:phylocko/py-lg.git py-lg
 pip install -r py-lg/requirements.txt
 ```
 
-### Adapting the configuration
+### Edit the configuration file
 
 ```
-vi py-lg/app.py
+cp py-lg/config_example.py py-lg/config.py
+vi py-lg/config.py
 ```
 
-Edit last line of the file to define your local IP-Address and port.
-
-
-### Running the LG
-
-Explain what these tests test and why
+### Run the developer's LG
 
 ```
 python py-lg/app.py
