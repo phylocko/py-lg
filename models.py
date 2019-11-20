@@ -19,27 +19,9 @@ class RouteServer:
     def __init__(self, server=None):
         self._session = None
         self.server = server
-
-        self.next_hop_cache = self.load_next_hop_cache()
         self.connect()
 
-    @staticmethod
-    def load_next_hop_cache():
-        with open('next_hop_map.pickle', 'rb') as f:
-            return pickle.load(f)
-
-    @staticmethod
-    def save_next_hop_cache(data):
-        with open('next_hop_map.pickle', 'wb') as f:
-            pickle.dump(data, f)
-
-    def update_next_hop_cache(self, data, service, ip_version):
-        cache = self.load_next_hop_cache()
-        cache[service][ip_version] = data
-        self.save_next_hop_cache(cache)
-
     def connect(self):
-        print('%s ssh' % self.server)
         session = paramiko.SSHClient()
         session.load_system_host_keys()
         session.connect(self.server, username=config.SSH_USERNAME, password=config.SSH_PASSWORD)
@@ -52,7 +34,6 @@ class RouteServer:
         try:
             stdin, stdout, stderr = self._session.exec_command(command, timeout=5)
         except (TimeoutError, SSHException):
-            print('Timeout, reconnecting...')
             self.connect()
             self._cmd(command)
         else:
@@ -114,12 +95,11 @@ class RouteServer:
         for prefix_dump in self._parse__show_route_peer(bird_dump):
             prefix = Prefix(prefix_dump, ip_version)
             prefix.prefix = route.prefix  # we can't parse it from the dump because of 'via'
-            next_hop_netname = self.next_hop_cache.get(service, {}).get(ip_version, {}).get(prefix.next_hop)
-            prefix.next_hop_netname = next_hop_netname
             prefixes.append(prefix)
         return route
 
     def peers(self, service='wix', ip_version=4):
+
         bird_command = "show protocols all"
         server_command = "echo '%s' | sudo birdc -s /var/run/bird%s.%s.ctl" % (
             bird_command, ip_version, service)
@@ -134,10 +114,6 @@ class RouteServer:
                 continue
             else:
                 peers.append(peer)
-
-        next_hop_map = {x.neighbor_address: x.description for x in peers}
-        if next_hop_map:
-            self.update_next_hop_cache(next_hop_map, service, ip_version)
         return peers
 
     def peer(self, peer_id, service=None, ip_version=4):
