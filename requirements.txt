@@ -50,7 +50,7 @@ PySocks==1.6.8
 python-jsonrpc-server==0.2.0
 python-language-server==0.27.0
 pyzabbix==0.7.5
-requests==2.19.1
+requests==2.20.0
 rope==0.14.0
 rt==1.0.11
 ruamel-yaml==0.15.46
