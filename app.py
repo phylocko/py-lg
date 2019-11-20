@@ -1,3 +1,5 @@
+# Copyright 2019 Vladislav Pavkin
+
 import ipaddress
 import pickle
 import re
@@ -5,8 +7,8 @@ from datetime import datetime, timedelta
 from threading import Thread
 
 import sentry_sdk
-from sentry_sdk.integrations.flask import FlaskIntegration
 from flask import Flask, render_template, request, redirect
+from sentry_sdk.integrations.flask import FlaskIntegration
 
 import config
 from models import RouteServer

@@ -1,9 +1,9 @@
+# Copyright 2019 Vladislav Pavkin
+
 import pickle
 import re
 from datetime import datetime
 from ipaddress import IPv4Address, IPv6Address
-from socket import gaierror
-from time import sleep
 
 import paramiko
 from paramiko.ssh_exception import SSHException
