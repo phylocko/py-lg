@@ -1,3 +1,6 @@
+MAINTENANCE = False
+MAINTENANCE_TEXT = 'LG is currently down for maintenance. We\'ll be back in a few days.'
+
 SERVERS = {
     'rs1': 'rs1.example.net',
     'rs2': 'rs2.example.net'

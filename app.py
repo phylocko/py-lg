@@ -59,13 +59,23 @@ def peer_id_is_valid(peer_id):
     return False
 
 
+def maintenance():
+    return render_template('maintenance.html', maintenance_text=config.MAINTENANCE_TEXT)
+
+
 @app.route('/')
 def index():
+    if config.MAINTENANCE:
+        return maintenance()
+
     return redirect('/wix/summary/')
 
 
 @app.route('/<service>/summary/')
 def peers(service):
+    if config.MAINTENANCE:
+        return maintenance()
+
     if service not in ['fv', 'wix']:
         return render_template('error.html', error='Wrong service'), 404
 
@@ -136,6 +146,9 @@ def peers(service):
 
 @app.route('/<service>/peer/<peer_id>/')
 def peer(service, peer_id):
+    if config.MAINTENANCE:
+        return maintenance()
+
     if service not in ['wix', 'fv']:
         return render_template('error.html', error='Wrong service'), 404
 
@@ -164,6 +177,9 @@ def peer(service, peer_id):
 
 @app.route('/<service>/peer/<peer_id>/routes/')
 def peer_prefixes(service, peer_id):
+    if config.MAINTENANCE:
+        return maintenance()
+
     if service not in ['wix', 'fv']:
         return render_template('error.html', error='Page not found'), 404
 
@@ -203,6 +219,9 @@ def peer_prefixes(service, peer_id):
 
 @app.route('/<service>/route/')
 def route(service):
+    if config.MAINTENANCE:
+        return maintenance()
+
     if service not in ['wix', 'fv']:
         return render_template('error.html', error='Wrong service'), 404
 
@@ -236,6 +255,9 @@ def route(service):
 
 @app.route('/search/')
 def search():
+    if config.MAINTENANCE:
+        return maintenance()
+
     service = request.args.get('service', 'wix')
 
     if service not in ['fv', 'wix']:
@@ -254,6 +276,9 @@ def search():
 
 
 def peers_pairs(rs1_peers, rs2_peers):
+    if config.MAINTENANCE:
+        return maintenance()
+
     pairs = []
 
     checked_values = []
