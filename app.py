@@ -141,7 +141,8 @@ def peers(service):
                            pairs=pairs,
                            service=service,
                            family=ip_version,
-                           page='summary')
+                           page='summary',
+                           welcome_text=config.WELCOME_TEXT)
 
 
 @app.route('/<service>/peer/<peer_id>/')
@@ -172,7 +173,8 @@ def peer(service, peer_id):
                            rs2=rs2,
                            rs1_peer=rs1_peer,
                            rs2_peer=rs2_peer,
-                           peer=peer)
+                           peer=peer,
+                           welcome_text=config.WELCOME_TEXT)
 
 
 @app.route('/<service>/peer/<peer_id>/routes/')
@@ -214,7 +216,8 @@ def peer_prefixes(service, peer_id):
                            rs1_routes=rs1_routes,
                            rs2_routes=rs2_routes,
                            rejected_mode=rejected_mode,
-                           peer=peer)
+                           peer=peer,
+                           welcome_text=config.WELCOME_TEXT)
 
 
 @app.route('/<service>/route/')
@@ -250,7 +253,8 @@ def route(service):
                            rs2=rs2,
                            rs1_route=rs1_route,
                            rs2_route=rs2_route,
-                           page='route')
+                           page='route',
+                           welcome_text=config.WELCOME_TEXT)
 
 
 @app.route('/search/')

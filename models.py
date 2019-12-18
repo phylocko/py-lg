@@ -1,9 +1,9 @@
 # Copyright 2019 Vladislav Pavkin
 
-import pickle
 import re
 from datetime import datetime
 from ipaddress import IPv4Address, IPv6Address
+from socket import gaierror
 
 import paramiko
 from paramiko.ssh_exception import SSHException
@@ -24,8 +24,12 @@ class RouteServer:
     def connect(self):
         session = paramiko.SSHClient()
         session.load_system_host_keys()
-        session.connect(self.server, username=config.SSH_USERNAME, password=config.SSH_PASSWORD)
-        self._session = session
+        try:
+            session.connect(self.server, username=config.SSH_USERNAME, password=config.SSH_PASSWORD)
+        except (gaierror, SSHException):
+            pass
+        else:
+            self._session = session
 
     def _disconnect(self):
         self._session.close()
@@ -80,6 +84,9 @@ class RouteServer:
         return routes
 
     def route(self, destination=None, service=None, ip_version=None):
+        if self._session is None:
+            return
+
         if '/' in destination:
             bird_command = "show route %s all" % destination
         else:
@@ -99,6 +106,8 @@ class RouteServer:
         return route
 
     def peers(self, service='wix', ip_version=4):
+        if self._session is None:
+            return []
 
         bird_command = "show protocols all"
         server_command = "echo '%s' | sudo birdc -s /var/run/bird%s.%s.ctl" % (
@@ -117,6 +126,9 @@ class RouteServer:
         return peers
 
     def peer(self, peer_id, service=None, ip_version=4):
+        if self._session is None:
+            return
+
         bird_command = "show protocols all %s" % peer_id
         server_command = "echo '%s' | sudo birdc -s /var/run/bird%s.%s.ctl" % (
             bird_command, ip_version, service)
@@ -137,6 +149,9 @@ class RouteServer:
         return None
 
     def prefixes(self, peer_id, rejected, service=None, ip_version=4):
+        if self._session is None:
+            return []
+
         bird_command = "show route protocol %s all" % peer_id
         if rejected:
             bird_command = "show route protocol %s filtered all" % peer_id

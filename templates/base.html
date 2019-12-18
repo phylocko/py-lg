@@ -50,6 +50,14 @@
 
 {% include 'messages.html' %}
 
+{% if welcome_text %}
+    <div class="container ">
+        <div class="alert alert-info text-center">
+            {{ welcome_text }}
+        </div>
+    </div>
+{% endif %}
+
 {% block content %}
 {% endblock %}
 
