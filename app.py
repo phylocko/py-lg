@@ -46,10 +46,10 @@ class GetParallel:
         task1.join()
         task2.join()
 
-    def exec(self, index):
-        func = self.functions[index]
+    def exec(self, idx):
+        func = self.functions[idx]
         result = func(*self.func_args, **self.func_kwargs)
-        self.results[index] = result
+        self.results[idx] = result
 
 
 def peer_id_is_valid(peer_id):
@@ -193,17 +193,16 @@ def peer_prefixes(service, peer_id):
         rejected_mode = True
 
     ip_version = get_family(request)
-    parallel = GetParallel(rs1_func=rs1.peer,
-                           rs2_func=rs2.peer,
-                           func_args=[peer_id],
-                           func_kwargs={'service': service, 'ip_version': ip_version})
-    rs1_peer, rs2_peer = parallel.results[0], parallel.results[1]
 
     parallel = GetParallel(rs1_func=rs1.prefixes,
                            rs2_func=rs2.prefixes,
                            func_args=[peer_id, rejected_mode],
                            func_kwargs={'service': service, 'ip_version': ip_version})
-    rs1_routes, rs2_routes = parallel.results[0], parallel.results[1]
+
+    rs1_result, rs2_result = parallel.results[0], parallel.results[1]
+
+    rs1_peer, rs1_routes = rs1_result
+    rs2_peer, rs2_routes = rs2_result
 
     return render_template('peer_routes_page.html',
                            service=service,

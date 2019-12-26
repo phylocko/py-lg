@@ -2,7 +2,7 @@
 
 import re
 from datetime import datetime
-from ipaddress import IPv4Address, IPv6Address
+from ipaddress import IPv4Address, IPv6Address, ip_address
 from socket import gaierror
 
 import paramiko
@@ -26,7 +26,7 @@ class RouteServer:
         session.load_system_host_keys()
         try:
             session.connect(self.server, username=config.SSH_USERNAME, password=config.SSH_PASSWORD)
-        except (gaierror, SSHException):
+        except (gaierror, SSHException) as e:
             pass
         else:
             self._session = session
@@ -44,21 +44,21 @@ class RouteServer:
             bird_dump_bytes = stdout.read()
             return bird_dump_bytes.decode("utf-8")
 
-    def _parse__show_protocols(self, bird_dump):
+    def _parse__show_protocols(self, bird_dump, ip_version=4):
         peers_lines = []
         peer_lines = []
 
         for l in bird_dump.splitlines():
-            if l[0:5] == "peer_":
+            if l.startswith('peer'):
                 if peer_lines:
                     peers_lines.append(peer_lines)
                     peer_lines = []
                 peer_lines.append(l)
             else:
-                if peer_lines:
+                if peer_lines and peer_lines[0].startswith('peer%s_' % ip_version):
                     peer_lines.append(l)
 
-        if peer_lines:
+        if peer_lines and peer_lines[0].startswith('peer%s_' % ip_version):
             peers_lines.append(peer_lines)
 
         return peers_lines
@@ -68,8 +68,11 @@ class RouteServer:
         routes = []
         route = []
 
+        ip_pattern = re.compile(r'^\d{1,4}\.\d{1,4}\.\d{1,4}\.\d{1,4}\/\d{1,2}')
+
         for l in bird_dump.splitlines():
-            if 'via' in l:
+            # if 'via' in l:
+            if ip_pattern.match(l):
                 if route:
                     routes.append(route)
                     route = []
@@ -92,8 +95,7 @@ class RouteServer:
         else:
             bird_command = "show route for %s all" % destination
 
-        server_command = "echo '%s' | sudo birdc -s /var/run/bird%s.%s.ctl" % (
-            bird_command, ip_version, service)
+        server_command = '/var/run/bird.%s.ctl %s' % (service, bird_command)
         bird_dump = self._cmd(server_command)
 
         prefixes = []
@@ -109,13 +111,13 @@ class RouteServer:
         if self._session is None:
             return []
 
-        bird_command = "show protocols all"
-        server_command = "echo '%s' | sudo birdc -s /var/run/bird%s.%s.ctl" % (
-            bird_command, ip_version, service)
+        bird_command = 'show protocols all'
+        server_command = '/var/run/bird.%s.ctl %s' % (
+            service, bird_command)
         bird_dump = self._cmd(server_command)
 
         peers = []
-        protocols_dump = self._parse__show_protocols(bird_dump)
+        protocols_dump = self._parse__show_protocols(bird_dump, ip_version)
         for peer_dump in protocols_dump:
             try:
                 peer = Peer(peer_dump, ip_version)
@@ -129,9 +131,10 @@ class RouteServer:
         if self._session is None:
             return
 
-        bird_command = "show protocols all %s" % peer_id
-        server_command = "echo '%s' | sudo birdc -s /var/run/bird%s.%s.ctl" % (
-            bird_command, ip_version, service)
+        peer_id = peer_id.replace('peer_', 'peer%s_' % ip_version)
+
+        bird_command = 'show protocols all %s' % peer_id
+        server_command = '/var/run/bird.%s.ctl %s' % (service, bird_command)
         bird_dump = self._cmd(server_command)
 
         peers = []
@@ -152,13 +155,21 @@ class RouteServer:
         if self._session is None:
             return []
 
-        bird_command = "show route protocol %s all" % peer_id
-        if rejected:
-            bird_command = "show route protocol %s filtered all" % peer_id
+        peer = self.peer(peer_id, service=service, ip_version=ip_version)
 
-        server_command = "echo '%s' | sudo birdc -s /var/run/bird%s.%s.ctl | head -3000" % (bird_command,
-                                                                                            ip_version,
-                                                                                            service)
+        if not rejected and peer.imported_routes > 300:
+            return peer, []
+
+        if rejected and peer.filtered_routes > 300:
+            return peer, []
+
+        peer_id = peer_id.replace('peer_', 'peer%s_' % ip_version)
+        bird_command = 'show route protocol %s all' % peer_id
+        if rejected:
+            bird_command = 'show route protocol %s filtered all' % peer_id
+
+        server_command = '/var/run/bird.%s.ctl %s' % (service, bird_command)
+
         bird_dump = self._cmd(server_command)
 
         prefixes = []
@@ -168,7 +179,7 @@ class RouteServer:
                 if rejected:
                     prefix.filtered = True
                 prefixes.append(prefix)
-        return prefixes
+        return peer, prefixes
 
 
 class Prefix:
@@ -192,7 +203,8 @@ class Prefix:
         """
         Fills all route information
         """
-        self.prefix = self._extract_word('via', 0)
+
+        self.prefix = self._extract_by_re(r'^\d{1,4}\.\d{1,4}\.\d{1,4}\.\d{1,4}\/\d{1,2}', 0)
         self.origin = self._extract_word('BGP.origin', 1)
         self.next_hop = self._extract_word('BGP.next_hop', 1)
         self.local_pref = self._extract_word('BGP.local_pref', 1)
@@ -202,7 +214,7 @@ class Prefix:
 
     def _parse_preferred(self):
         for l in self._dump:
-            if 'via' in l and '*' in l:
+            if 'unicast' in l and '*' in l:  # that's wired, better use re
                 return True
         return False
 
@@ -234,6 +246,15 @@ class Prefix:
         word = None
         for l in self._dump:
             if pattern in l:
+                parts = l.split()
+                word = parts[position]
+        return word
+
+    def _extract_by_re(self, pattern, position):
+        pattern = re.compile(pattern)
+        word = None
+        for l in self._dump:
+            if pattern.match(l):
                 parts = l.split()
                 word = parts[position]
         return word
@@ -325,24 +346,17 @@ class Peer:
         self.hold_timer = self._parse_hold_timer()
         self.keepalive_timer = self._parse_keepalive_timer()
 
-        if self.ip_version == 4:
-            try:
-                ip_address = IPv4Address(self.neighbor_address)
-                self.value = int(ip_address)
-            except Exception as e:
-                raise ParsingError('Wrong peer RS dump given')
-
-        elif self.ip_version == 6:
-            try:
-                ip_address = IPv6Address(self.neighbor_address)
-                self.value = int(ip_address)
-            except Exception as e:
-                raise ParsingError('Wrong peer RS dump given')
+        try:
+            neighbor_ip_address = ip_address(self.neighbor_address)
+            self.value = int(neighbor_ip_address)
+        except ValueError as e:
+            raise ParsingError('Wrong peer RS dump given', e)
 
     def _parse_peer_id(self):
         l = self._dump[0]
         parts = l.split()
-        return parts[0]
+        peer_id = parts[0].replace('peer%s_' % self.ip_version, 'peer_')
+        return peer_id
 
     def _parse_bgp_state_details(self):
         """
@@ -397,10 +411,10 @@ class Peer:
         return 0, 0, 0, 0
 
     def _parse_neighbor_address(self):
-        return self._extract_word("Neighbor address", 2)
+        return self._extract_word('Neighbor address', 2)
 
     def _parse_neighbor_as(self):
-        neighbor_as = self._extract_word("Neighbor AS", 2)
+        neighbor_as = self._extract_word('Neighbor AS', 2)
         if neighbor_as:
             return int(neighbor_as)
         else:
