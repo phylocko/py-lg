@@ -1,9 +1,8 @@
 # Copyright 2019 Vladislav Pavkin
 
 import re
-import netaddr
 from datetime import datetime
-from ipaddress import IPv4Address, IPv6Address, ip_address
+from ipaddress import ip_address
 from socket import gaierror
 from typing import Optional
 
