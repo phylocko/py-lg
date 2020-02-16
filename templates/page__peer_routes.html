@@ -85,9 +85,13 @@
 
                                 {% if rejected_mode and peer.filtered_routes <= 300 or  not rejected_mode and peer.imported_routes <= 300 %}
                                     <table class="table table-condensed">
-                                        {% for route in routes %}
-                                            {% include 'route.html' %}
-                                        {% endfor %}
+                                        {% if routes %}
+                                            {% for route in routes %}
+                                                {% include 'route.html' %}
+                                            {% endfor %}
+                                        {% else %}
+                                            <tr><td class="text-muted text-center">No routes</td></tr>
+                                        {% endif %}
                                     </table>
                                 {% else %}
                                     <div class="alert alert-warning text-center">> 300 routes :'(</div>
@@ -116,9 +120,13 @@
 
                                 {% if rejected_mode and peer.filtered_routes <= 300 or  not rejected_mode and peer.imported_routes <= 300 %}
                                     <table class="table table-condensed">
-                                        {% for route in routes %}
-                                            {% include 'route.html' %}
-                                        {% endfor %}
+                                        {% if routes %}
+                                            {% for route in routes %}
+                                                {% include 'route.html' %}
+                                            {% endfor %}
+                                        {% else %}
+                                            <tr><td class="text-muted text-center">No routes</td></tr>
+                                        {% endif %}
                                     </table>
                                 {% else %}
                                     <div class="alert alert-warning text-center">> 300 routes :'(</div>
