@@ -24,7 +24,7 @@
         <tr>
             <td class="warning text-right">Imported</td>
             <td class="active"><b>{{ peer.imported_routes }}</b>
-                <a class="pull-right" href="routes/?family={{ family }}">View accepted routes</a></td>
+                <a class="pull-right" href="routes/?family={{ family }}">View accepted prefixes</a></td>
         </tr>
         <tr>
             <td class="success text-right">Preferred</td>
@@ -33,7 +33,7 @@
         <tr>
             <td class="danger text-right">Filtered</td>
             <td class="active text-danger"><b>{{ peer.filtered_routes }}</b>
-                <a class="pull-right" href="routes/?family={{ family }}&rejected=yes">View rejected routes</a></td>
+                <a class="pull-right" href="routes/?family={{ family }}&rejected=yes">View rejected prefixes</a></td>
         </tr>
         <tr>
             <td class="active text-right">Exported</td>

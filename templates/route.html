@@ -1,28 +1,32 @@
-<tr class="{% if route.preferred %}preferred preferred-heading{% else %}non-preferred non-preferred-heading{% endif %}">
-
-    <td class="asterisk">
-        {% if route.preferred %}
-            <span class="glyphicon glyphicon-menu-right" aria-hidden="true"></span>
+{% if rejected_mode %}
+    <tr class="danger">
         {% else %}
-            &nbsp;
-        {% endif %}
-    </td>
+    <tr class="{% if route.preferred %}preferred preferred-heading{% else %}non-preferred non-preferred-heading{% endif %}">
+{% endif %}
 
-    <td><b><a href="/{{ service }}/route/?destination={{ route.prefix }}">{{ route.prefix }}</a></b></td>
+<td class="asterisk">
+    {% if route.preferred %}
+        <span class="glyphicon glyphicon-menu-right" aria-hidden="true"></span>
+    {% else %}
+        &nbsp;
+    {% endif %}
+</td>
 
-    <td colspan="2">
-        Next-hop: <b>{{ route.next_hop }}</b>
-        {% if route.next_hop_netname %}
-            <label class="label label-primary pull-right">{{ route.next_hop_netname }}</label>
-        {% endif %}
-    </td>
+<td><b><a href="/{{ service }}/route/?destination={{ route.destination }}">{{ route.destination }}</a></b></td>
+
+<td colspan="2">
+    Next-hop: <b>{{ route.next_hop }}</b>
+    {% if route.next_hop_netname %}
+        <label class="label label-primary pull-right">{{ route.next_hop_netname }}</label>
+    {% endif %}
+</td>
 
 </tr>
 
 <tr class="{% if route.preferred %}preferred{% else %}non-preferred{% endif %}">
     <td colspan="2"></td>
     <td colspan="2">
-            Origin: <b>{{ route.origin }}</b> Localpref: <b>{{ route.local_pref }}</b>
+        Origin: <b>{{ route.origin }}</b> Localpref: <b>{{ route.local_pref }}</b>
     </td>
 </tr>
 
@@ -43,11 +47,9 @@
     <td colspan="2">
         <div class="long_communities">
             <small>
-                <ul class="list-unstyled">
-                    {% for community in route.communities if community.description %}
-                        <li><b>{{ community }}</b> <span class="text-muted hidden-xs">— {{ community.description }}</span></li>
-                    {% endfor %}
-                </ul>
+                {% for community in route.communities if community.description %}
+                    <b>{{ community }}</b> <span class="text-muted hidden-xs">— {{ community.description }}</span><br>
+                {% endfor %}
                 {% for community in route.communities if not community.description %}
                     <label class="label label-default">{{ community }}</label>
                 {% endfor %}

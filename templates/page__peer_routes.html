@@ -53,7 +53,7 @@
             <div class="row">
                 <div class="col-sm-8">
                     {% if rejected_mode %}
-                        <a class="btn btn-success" href="/{{ service }}/peer/{{ peer_id }}/routes/?family={{ family }}">Show accepted routes</a>
+                        <a class="btn btn-success" href="/{{ service }}/peer/{{ peer_id }}/routes/?family={{ family }}">Show accepted prefixes</a>
                     {% else %}
 
                         {% if rs1_routes|length > 3 or rs2_routes|length > 3 %}
@@ -65,7 +65,7 @@
 
                 <div class="col-sm-4 text-right hidden-xs">
                     {% if not rejected_mode %}
-                        <a class="btn btn-warning" href="/{{ service }}/peer/{{ peer_id }}/routes/?family={{ family }}&rejected=yes">Show rejected routes</a>
+                        <a class="btn btn-warning" href="/{{ service }}/peer/{{ peer_id }}/routes/?family={{ family }}&rejected=yes">Show rejected prefixes</a>
                     {% endif %}
                 </div>
 
@@ -77,30 +77,22 @@
                     <h3>Session @ RS1</h3>
                     {% with peer = rs1_peer %}
                         {% include 'brief_peer_data.html' %}
-                        <h3>&nbsp;{% if rejected_mode %}Rejected{% else %}Accepted{% endif %} routes</h3>
+                        <h3>&nbsp;{% if rejected_mode %}Rejected{% else %}Accepted{% endif %} prefixes</h3>
 
                         {% if peer.state == 'up' %}
 
                             {% with routes = rs1_routes %}
-                                {% if rejected_mode %}
-                                    {% if peer.imported_routes > 300 %}
-                                        <div class="alert alert-warning" role="alert">
-                                            Displaying first 300 of
 
-                                            {% if rejected_mode %}{{ peer.filtered_routes }}{% else %}{{ peer.imported_routes }}{% endif %}
-
-                                            {% if rejected_mode %}rejected{% else %}accepted{% endif %}
-                                            routes
-
-                                        </div>
-                                    {% endif %}
+                                {% if rejected_mode and peer.filtered_routes <= 300 or  not rejected_mode and peer.imported_routes <= 300 %}
+                                    <table class="table table-condensed">
+                                        {% for route in routes %}
+                                            {% include 'route.html' %}
+                                        {% endfor %}
+                                    </table>
+                                {% else %}
+                                    <div class="alert alert-warning text-center">> 300 routes :'(</div>
                                 {% endif %}
 
-                                <table class="table table-condensed">
-                                    {% for route in routes %}
-                                        {% include 'route.html' %}
-                                    {% endfor %}
-                                </table>
 
                             {% endwith %}
 
@@ -121,25 +113,16 @@
                         {% if peer.state == 'up' %}
 
                             {% with routes = rs1_routes %}
-                                {% if rejected_mode %}
-                                    {% if peer.imported_routes > 300 %}
-                                        <div class="alert alert-warning" role="alert">
-                                            Displaying first 300 of
 
-                                            {% if rejected_mode %}{{ peer.filtered_routes }}{% else %}{{ peer.imported_routes }}{% endif %}
-
-                                            {% if rejected_mode %}rejected{% else %}accepted{% endif %}
-                                            routes
-
-                                        </div>
-                                    {% endif %}
+                                {% if rejected_mode and peer.filtered_routes <= 300 or  not rejected_mode and peer.imported_routes <= 300 %}
+                                    <table class="table table-condensed">
+                                        {% for route in routes %}
+                                            {% include 'route.html' %}
+                                        {% endfor %}
+                                    </table>
+                                {% else %}
+                                    <div class="alert alert-warning text-center">> 300 routes :'(</div>
                                 {% endif %}
-
-                                <table class="table table-condensed">
-                                    {% for route in routes %}
-                                        {% include 'route.html' %}
-                                    {% endfor %}
-                                </table>
 
                             {% endwith %}
 

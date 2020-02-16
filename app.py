@@ -32,9 +32,9 @@ else:
 
 
 class GetParallel:
-    results = [None, None]
+    results = [[None, None], [None, None]]
 
-    def __init__(self, rs1_func=None, rs2_func=None, func_args=None, func_kwargs=None):
+    def __init__(self, rs1_func=None, rs2_func=None, func_args=None, func_kwargs=None) -> None:
         self.functions = [rs1_func, rs2_func]
         self.func_args = func_args or []
         self.func_kwargs = func_kwargs or {}
@@ -46,13 +46,13 @@ class GetParallel:
         task1.join()
         task2.join()
 
-    def exec(self, idx):
+    def exec(self, idx: int) -> None:
         func = self.functions[idx]
         result = func(*self.func_args, **self.func_kwargs)
         self.results[idx] = result
 
 
-def peer_id_is_valid(peer_id):
+def peer_id_is_valid(peer_id: str) -> bool:
     peer_re = re.compile(r'^peer_\d{4,6}$')
     if peer_re.match(peer_id):
         return True
@@ -60,7 +60,7 @@ def peer_id_is_valid(peer_id):
 
 
 def maintenance():
-    return render_template('maintenance.html', maintenance_text=config.MAINTENANCE_TEXT)
+    return render_template('page__maintenance.html', maintenance_text=config.MAINTENANCE_TEXT)
 
 
 @app.route('/')
@@ -137,7 +137,7 @@ def peers(service):
                 continue
         pairs = filtered_pairs
 
-    return render_template('summary.html',
+    return render_template('page__summary.html',
                            pairs=pairs,
                            service=service,
                            family=ip_version,
@@ -165,7 +165,7 @@ def peer(service, peer_id):
 
     rs1_peer, rs2_peer = parallel.results[0], parallel.results[1]
 
-    return render_template('peer_page.html',
+    return render_template('page__peer.html',
                            service=service,
                            family=ip_version,
                            peer_id=peer_id,
@@ -194,8 +194,8 @@ def peer_prefixes(service, peer_id):
 
     ip_version = get_family(request)
 
-    parallel = GetParallel(rs1_func=rs1.prefixes,
-                           rs2_func=rs2.prefixes,
+    parallel = GetParallel(rs1_func=rs1.peer_routes,
+                           rs2_func=rs2.peer_routes,
                            func_args=[peer_id, rejected_mode],
                            func_kwargs={'service': service, 'ip_version': ip_version})
 
@@ -204,7 +204,7 @@ def peer_prefixes(service, peer_id):
     rs1_peer, rs1_routes = rs1_result
     rs2_peer, rs2_routes = rs2_result
 
-    return render_template('peer_routes_page.html',
+    return render_template('page__peer_routes.html',
                            service=service,
                            family=ip_version,
                            peer_id=peer_id,
@@ -243,7 +243,7 @@ def route(service):
                                         'ip_version': ip_version})
     rs1_route, rs2_route = parallel.results[0], parallel.results[1]
 
-    return render_template('route_page.html',
+    return render_template('page__route.html',
                            service=service,
                            family=ip_version,
                            destination=given_prefix,

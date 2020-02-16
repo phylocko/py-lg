@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}{% if service == 'fv' %}Fill View peers{% elif service == 'wix' %}W-IX peers{% endif %}{% endblock %}
+{% block title %}{% if service == 'fv' %}Full View peers{% elif service == 'wix' %}W-IX peers{% endif %}{% endblock %}
 {% block content %}
 
     {% if not pairs %}
@@ -76,7 +76,8 @@
                         <td class="text-muted">
                             <small>
                                 {% if pair['rs1'] %}
-                                    <abbr title="{{ pair['rs1'].last_event_time }}">{{ pair['rs1'].persistency() }} {{ pair['rs1'].state }}</abbr><br>
+                                    <abbr title="{{ pair['rs1'].last_event_time }}">{{ pair['rs1'].persistency() }} {{ pair['rs1'].state }}</abbr>
+                                    <br>
                                 {% else %}
                                     —
                                 {% endif %}
