@@ -116,7 +116,7 @@
 
                         {% if peer.state == 'up' %}
 
-                            {% with routes = rs1_routes %}
+                            {% with routes = rs2_routes %}
 
                                 {% if rejected_mode and peer.filtered_routes <= 300 or  not rejected_mode and peer.imported_routes <= 300 %}
                                     <table class="table table-condensed">

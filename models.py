@@ -11,6 +11,28 @@ from paramiko.ssh_exception import SSHException
 
 import config
 
+RE_IPv4 = re.compile(
+    r'^\d{1,4}\.\d{1,4}\.\d{1,4}\.\d{1,4}\/\d{1,2}'
+)
+
+RE_IPv6 = re.compile(
+    r'(([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|(['
+    r'0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){'
+    r'1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,'
+    r'5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}'
+    r':){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]'
+    r'{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-'
+    r'fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0'
+    r'-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:('
+    r'(:[0-9a-fA-F]{1,4}){1,7}|:)|fe80:(:[0-9a-fA-'
+    r'F]{0,4}){0,4}%[0-9a-zA-Z]{1,}|::(ffff(:0{1,4'
+    r'}){0,1}:){0,1}((25[0-5]|(2[0-4]|1{0,1}[0-9])'
+    r'{0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0'
+    r'-9]){0,1}[0-9])|([0-9a-fA-F]{1,4}:){1,4}:((2'
+    r'5[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,'
+    r'3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9]))'
+)
+
 
 class RequiredAttrs:
     def __init__(self, *args, **kwargs):
@@ -420,7 +442,11 @@ class BGPPrefix:
 
     def _parse_dump(self):
         if not self.destination:
-            self.destination = self._extract_by_re(r'^\d{1,4}\.\d{1,4}\.\d{1,4}\.\d{1,4}\/\d{1,2}', 0)
+            if self.ip_version == 4:
+                self.destination = self._extract_by_re(RE_IPv4, 0)
+            else:
+                self.destination = self._extract_by_re(RE_IPv6, 0)
+
         self.origin = self._extract_word('BGP.origin', 1)
         self.next_hop = self._extract_word('BGP.next_hop', 1)
         self.local_pref = self._extract_word('BGP.local_pref', 1)
