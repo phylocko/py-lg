@@ -219,7 +219,7 @@ class Route:
     # a product or 'show route' bird command
 
     def __init__(self, dump=None, ip_version=None):
-        destination = None
+        self.destination = None
         self.paths = []
         _dump = None
         self.ip_version = ip_version
